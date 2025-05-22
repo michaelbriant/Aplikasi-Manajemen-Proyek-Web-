@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Manajemen Proyek{% endblock %}</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #ffffff;
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background-color: #cde3f6;
+            padding: 20px;
+            box-sizing: border-box;
+            position: fixed; /* ✅ agar tetap menempel saat scroll */
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar h2 {
+            color: #1a2b44;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .sidebar a {
+            display: block;
+            margin: 20px auto;
+            background-color: #1a2b44;
+            color: white;
+            padding: 10px 20px;
+            width: 140px;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar a:hover {
+            background-color: #3e5c7f;
+        }
+
+        .content {
+            margin-left: 260px; /* ✅ sesuai dengan width sidebar */
+            padding: 30px;
+            background-color: #ffffff;
+            min-height: 100vh; /* agar bisa scroll tanpa terpotong */
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .top-right {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+
+        .top-right img {
+            margin-left: 10px;
+            width: 28px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #b5cde1;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background-color: #f5faff;
+        }
+
+        button {
+            background-color: #1a2b44;
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #3e5c7f;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Profile Team</h2>
+        <a href="{% url 'homepage' %}">Home</a>
+        <a href="{% url 'tambah_proyek' %}">Project</a>
+        <a href="{% url 'list_anggota' %}">Profile Team</a>
+        <a href="#">View Progress</a>
+    </div>
+
+    <div class="content">
+        <div class="top-right">
+            <img src="https://www.svgrepo.com/show/384674/account-avatar-profile-user.svg">
+            <img src="https://www.svgrepo.com/show/512817/settings.svg">
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

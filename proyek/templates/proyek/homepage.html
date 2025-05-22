@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block title %}Homepage{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #c5cbe3; /* warna background halaman utama seperti di Figma */
+        font-family: Arial, sans-serif;
+    }
+
+    h1 {
+        color: #222;
+        margin-bottom: 20px;
+    }
+
+    .project-button {
+        background-color: #28304e;
+        color: white;
+        padding: 12px 20px;
+        margin-bottom: 15px;
+        border: none;
+        width: 100%;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .project-actions a {
+        color: white;
+        margin-left: 10px;
+        font-size: 20px;
+        text-decoration: none;
+    }
+
+    .project-actions a:hover {
+        color: #aaa;
+    }
+
+    .popup-overlay,
+    .mini-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.25);
+        z-index: 999;
+    }
+
+    .project-popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #2d2a2a; /* warna gelap popup */
+        color: black;
+        padding: 20px 25px 25px 25px;
+        border-radius: 12px;
+        width: 900px;           /* lebar diperlebar */
+        max-height: 95vh;       /* tinggi diperpanjang jadi 95vh */
+        overflow-y: auto;       /* scroll vertikal jika isi terlalu tinggi */
+        z-index: 1000;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        box-sizing: border-box;
+    }
+
+    .project-popup h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: 700;
+        font-size: 22px;
+        color: white;
+    }
+
+    .project-popup .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: #b41e1e; /* merah gelap */
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 3px;
+        text-align: center;
+        line-height: 28px;
+        font-weight: bold;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    .popup-section label {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 13px;
+        font-weight: 700;
+        color: white;
+    }
+
+    .popup-section input {
+        width: 100%;
+        padding: 6px 10px;  /* padding lebih kecil */
+        margin-bottom: 8px; /* jarak bawah lebih kecil */
+        border: none;
+        border-radius: 6px;
+        background-color: #a9a9a9; /* abu abu sesuai desain */
+        color: black;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: not-allowed;
+        box-sizing: border-box;
+    }
+
+    .popup-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .popup-buttons button {
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        background-color: #17295b; /* biru gelap */
+        color: white;
+        font-weight: 700;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .popup-buttons button:hover {
+        background-color: #32478a;
+    }
+
+    .mini-popup {
+        display: none;
+        position: fixed;
+        top: 25%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #1d1f27;
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 450px;
+        z-index: 1001;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .mini-popup h3 {
+        margin-top: 0;
+    }
+
+    .mini-popup p {
+        margin: 5px 0;
+    }
+
+    .mini-popup .close-mini {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        color: #d33;
+        font-size: 20px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+</style>
+
+<h1>Welcome, {{ user.username }}</h1>
+
+{% for proyek in semua_proyek %}
+    <button class="project-button" onclick="showPopup('popup-{{ proyek.id }}')">
+        {{ proyek.name }}
+        <div class="project-actions">
+            <a href="{% url 'edit_proyek' proyek.id %}" title="Edit">✏️</a>
+            <a href="{% url 'hapus_proyek' proyek.id %}" title="Hapus" onclick="return confirm('Yakin ingin menghapus proyek ini?')">🗑️</a>
+        </div>
+    </button>
+
+    <div class="popup-overlay" id="overlay-{{ proyek.id }}"></div>
+
+    <div class="project-popup" id="popup-{{ proyek.id }}">
+        <span class="close-btn" onclick="hidePopup('popup-{{ proyek.id }}')">&times;</span>
+        <h2>Profil Proyek</h2>
+        <div class="popup-section">
+            <label>Nama Proyek</label>
+            <input type="text" value="{{ proyek.name }}" disabled>
+            <label>Deskripsi Singkat</label>
+            <input type="text" value="{{ proyek.description }}" disabled>
+            <label>Lokasi</label>
+            <input type="text" value="{{ proyek.location }}" disabled>
+            <label>Tanggal Mulai</label>
+            <input type="text" value="{{ proyek.start_date }}" disabled>
+            <label>Tanggal Selesai</label>
+            <input type="text" value="{{ proyek.end_date }}" disabled>
+            <label>Supervisor</label>
+            <input type="text" value="{{ proyek.supervisor }}" disabled>
+        </div>
+
+        <div class="popup-buttons">
+            <button onclick="showMiniPopup('anggota', '{{ proyek.id }}')">Anggota</button>
+            <button onclick="showMiniPopup('aktivitas', '{{ proyek.id }}')">Aktivitas Pekerjaan</button>
+        </div>
+    </div>
+
+    <!-- Mini popups -->
+    <div class="mini-overlay" id="mini-overlay-{{ proyek.id }}"></div>
+
+    <div class="mini-popup" id="mini-anggota-{{ proyek.id }}">
+        <span class="close-mini" onclick="hideMiniPopup('{{ proyek.id }}')">&times;</span>
+        <h3>Anggota</h3>
+        {% if proyek.members.all %}
+            {% for anggota in proyek.members.all %}
+                <p>{{ anggota.name }} – {{ anggota.role }}</p>
+            {% endfor %}
+        {% else %}
+            <p>Belum ada anggota.</p>
+        {% endif %}
+    </div>
+
+    <div class="mini-popup" id="mini-aktivitas-{{ proyek.id }}">
+        <span class="close-mini" onclick="hideMiniPopup('{{ proyek.id }}')">&times;</span>
+        <h3>Aktivitas</h3>
+        {% if proyek.activities.all %}
+            {% for aktivitas in proyek.activities.all %}
+                <div style="margin-bottom: 10px;">
+                    <p><strong>Nama:</strong> {{ aktivitas.name }}</p>
+                    <p><strong>Waktu:</strong> {{ aktivitas.time }}</p>
+                    <p><strong>Perencana:</strong> {{ aktivitas.planner }}</p>
+                    <p><strong>Catatan:</strong>
+                        {% if aktivitas.notes %}
+                            <a href="{{ aktivitas.notes.url }}" target="_blank" style="color: lightblue;">Download</a>
+                        {% else %}
+                            Tidak ada catatan
+                        {% endif %}
+                    </p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Tidak ada aktivitas pekerjaan.</p>
+        {% endif %}
+    </div>
+{% endfor %}
+
+<script>
+    function showPopup(id) {
+        document.getElementById(id).style.display = 'block';
+        document.getElementById('overlay-' + id.split('-')[1]).style.display = 'block';
+    }
+
+    function hidePopup(id) {
+        document.getElementById(id).style.display = 'none';
+        document.getElementById('overlay-' + id.split('-')[1]).style.display = 'none';
+    }
+
+    function showMiniPopup(type, id) {
+        document.getElementById('mini-' + type + '-' + id).style.display = 'block';
+        document.getElementById('mini-overlay-' + id).style.display = 'block';
+    }
+
+    function hideMiniPopup(id) {
+        document.getElementById('mini-anggota-' + id).style.display = 'none';
+        document.getElementById('mini-aktivitas-' + id).style.display = 'none';
+        document.getElementById('mini-overlay-' + id).style.display = 'none';
+    }
+</script>
+{% endblock %}
