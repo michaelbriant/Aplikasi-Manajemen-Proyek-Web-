@@ -1,31 +1,51 @@
 {% extends 'base.html' %}
-{% block title %}Isi Form Profil Project{% endblock %}
+{% block title %}{{ proyek|default_if_none:''|yesno:"Edit,Tambah" }} Proyek{% endblock %}
 {% block content %}
 
 <style>
-    body {
+    .form-page {
         background-color: #c5cbe3;
         font-family: Arial, sans-serif;
+        padding: 30px;
+        min-height: 100vh;
     }
 
     .project-popup {
-        background-color: #2d2a2a;
+        background-color: #525252;
         color: white;
-        padding: 24px 40px;
+        padding: 24px 30px;
         border-radius: 12px;
-        width: 800px;
+        width: 90%;
+        max-width: 800px;
         margin: 40px auto;
         box-shadow: 0 0 20px rgba(0,0,0,0.5);
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         position: relative;
+        box-sizing: border-box;
     }
 
     .project-popup h2 {
         text-align: center;
         margin-bottom: 20px;
         font-size: 20px;
-        color: white;
         font-weight: 700;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        background-color: #dc3545;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        text-align: center;
+        line-height: 24px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10;
     }
 
     label {
@@ -38,11 +58,11 @@
 
     input, textarea, select {
         width: 100%;
-        padding: 6px 10px;
+        padding: 8px 12px;
         margin-bottom: 12px;
         border: none;
         border-radius: 6px;
-        background-color: #a9a9a9;
+        background-color: #D9D9D9;
         color: black;
         font-size: 13px;
         font-weight: 500;
@@ -54,12 +74,11 @@
         resize: none;
     }
 
-    .popup-buttons button,
     .btn {
         padding: 10px;
         border: none;
         border-radius: 6px;
-        background-color: #17295b;
+        background-color: #1a2b44;
         color: white;
         font-weight: 600;
         font-size: 13px;
@@ -69,25 +88,22 @@
         margin-bottom: 10px;
     }
 
-    .popup-buttons button:hover,
-    .btn:hover {
-        background-color: #32478a;
+    .btn-center-small {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 6px;
+        background-color: #1a2b44;
+        color: white;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        width: auto;
+        margin: 20px auto 10px auto;
+        display: block;
     }
 
-    .close-btn {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        background-color: #b41e1e;
-        color: white;
-        width: 24px;
-        height: 24px;
-        border-radius: 3px;
-        text-align: center;
-        line-height: 24px;
-        font-weight: bold;
-        font-size: 16px;
-        cursor: pointer;
+    .btn:hover, .btn-center-small:hover {
+        background-color: #32478a;
     }
 
     .modal {
@@ -101,62 +117,175 @@
     }
 
     .modal-content {
-        background-color: #1e1e1e;
-        width: 400px;
-        padding: 16px;
+        background-color: #525252;
+        width: 90%;
+        max-width: 420px;
+        padding: 20px;
         border-radius: 14px;
         max-height: 75vh;
         overflow-y: auto;
         font-size: 14px;
         color: white;
+        text-align: center;
+        box-sizing: border-box;
+        position: relative;
+        overflow: visible;
     }
 
     .close-modal {
-        float: right;
-        font-size: 18px;
-        color: red;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        font-size: 16px;
+        text-align: center;
+        line-height: 24px;
         cursor: pointer;
         font-weight: bold;
     }
 
     .search-input {
         width: 100%;
-        padding: 7px;
-        margin-bottom: 12px;
+        padding: 8px 12px;
+        margin-bottom: 16px;
         border-radius: 6px;
         border: 1px solid #ccc;
         font-size: 13px;
+        background-color: #f1f1f1;
     }
 
     .member-item {
+        background-color: #1a2b44;
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        background-color: #333;
-        padding: 6px 10px;
-        border-radius: 6px;
-        margin-bottom: 6px;
+        gap: 10px;
     }
 
     .member-name {
-        flex-grow: 1;
         color: white;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        height: 36px;
+        line-height: 36px;
+        flex: 1;
     }
 
-    .member-checkbox {
-        margin-left: 10px;
+    .select-wrapper {
+        position: relative;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        flex: 0 0 55%;
+        border-radius: 6px;
+        overflow: hidden;
+        background-color: #dcdcdc;
+    }
+
+    .select-wrapper select {
+        border: none;
+        font-size: 13px;
+        padding: 0 36px 0 12px;
+        background-color: transparent;
+        height: 100%;
+        width: 100%;
+        line-height: 36px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        outline: none;
+        box-shadow: none;
+        text-align: center;
+        border-radius: 0;
+        box-sizing: border-box;
+    }
+
+    .select-wrapper::after {
+        content: '';
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        border-top: 6px solid #1a2b44;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+    }
+
+    .remove-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        padding: 0 12px;
+        cursor: pointer;
+        font-weight: bold;
+        height: 36px;
+        line-height: 36px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-small-white {
+        margin-top: 16px;
+        padding: 8px 24px;
+        background-color: #1a2b44;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .btn-small-white:hover {
+        background-color: #32478a;
+    }
+
+    @media (max-width: 500px) {
+        .project-popup h2 {
+            font-size: 18px;
+        }
+
+        .btn-center-small,
+        .btn,
+        .btn-small-white,
+        input,
+        select,
+        textarea {
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .modal-content {
+            padding: 16px;
+        }
     }
 </style>
 
 <div class="project-popup">
-    <span class="close-btn" onclick="window.history.back()">&times;</span>
-    <h2>Profil Proyek</h2>
+    <span class="close-btn" onclick="window.history.back()">×</span>
+    <h2>{{ proyek|default_if_none:''|yesno:"Ubah Profil,Profil" }} Proyek</h2>
     <form method="post">
         {% csrf_token %}
+
         <label>Nama Proyek</label>
         {{ form.name }}
 
-        <label>Deskripsi Singkat Proyek</label>
+        <label>Deskripsi Proyek</label>
         {{ form.description }}
 
         <label>Lokasi</label>
@@ -171,37 +300,52 @@
         <label>Supervisor</label>
         {{ form.supervisor }}
 
-        <label>Anggota Proyek:</label>
-        <button type="button" class="btn" onclick="openModal()">Pilih Anggota</button>
-
+        <label>Pelaksana Proyek:</label>
+        <button type="button" class="btn" onclick="openModal()">Pelaksana</button>
         <input type="hidden" name="members" id="members-hidden">
 
-        <div class="popup-buttons">
-            <button type="submit">Simpan Proyek</button>
-        </div>
+        <label><strong>Status Proyek</strong></label>
+        <select name="status" required class="status-select">
+            <option value="" selected disabled>-- Pilih Status --</option>
+            {% for value, label in form.fields.status.choices %}
+                <option value="{{ value }}" {% if form.initial.status == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-center-small">Selesai</button>
     </form>
 </div>
 
-<!-- Modal -->
 <div id="anggotaModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeModal()">×</span>
-        <h3>Pilih Anggota</h3>
+        <h3>Pilih Pelaksana</h3>
         <input type="text" class="search-input" placeholder="Cari nama..." onkeyup="filterAnggota(this.value)">
         <div class="member-list" id="anggotaList"></div>
-        <br>
-        <button class="btn" onclick="closeModal()">Selesai</button>
+        <button class="btn-small-white" onclick="closeModal()">Add</button>
     </div>
 </div>
 
 <script>
     const selectedMembers = new Map();
-
     const allMembers = [
         {% for anggota in anggota_list %}
-            { id: '{{ anggota.id }}', name: '{{ anggota.name|escapejs }}' },
+            { id: '{{ anggota.id }}', name: "{{ anggota.name|escapejs }}" },
         {% endfor %}
     ];
+
+    const roles = ['Project Owner', 'Product Owner', 'Master', 'Ketua Sprint', 'Anggota'];
+
+    {% if selected_members %}
+        const initialMembers = {{ selected_members|safe }};
+        for (const [id, role] of Object.entries(initialMembers)) {
+            const member = allMembers.find(m => m.id === id);
+            if (member) {
+                selectedMembers.set(id, { name: member.name, role: role });
+            }
+        }
+    {% endif %}
 
     function openModal() {
         document.getElementById("anggotaModal").style.display = "flex";
@@ -209,6 +353,7 @@
     }
 
     function closeModal() {
+        updateHiddenField();
         document.getElementById("anggotaModal").style.display = "none";
     }
 
@@ -216,48 +361,71 @@
         const list = document.getElementById("anggotaList");
         list.innerHTML = '';
         keyword = keyword.toLowerCase();
+        const rendered = new Set();
 
-        // tampilkan hanya yang sesuai search atau sudah dicentang
-        allMembers.forEach(member => {
-            const match = member.name.toLowerCase().includes(keyword);
-            const selected = selectedMembers.has(member.id);
-
-            if (match || selected) {
-                const item = document.createElement("div");
-                item.className = "member-item";
-
-                const nameSpan = document.createElement("span");
-                nameSpan.className = "member-name";
-                nameSpan.textContent = member.name;
-
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.className = "member-checkbox";
-                checkbox.value = member.id;
-                checkbox.checked = selected;
-
-                checkbox.addEventListener("change", () => {
-                    if (checkbox.checked) {
-                        selectedMembers.set(member.id, member.name);
-                    } else {
-                        selectedMembers.delete(member.id);
-                    }
-                    updateHiddenField();
-                    filterAnggota(document.querySelector(".search-input").value);
-                });
-
-                item.appendChild(nameSpan);
-                item.appendChild(checkbox);
-                list.appendChild(item);
-            }
+        selectedMembers.forEach((data, id) => {
+            const item = createMemberItem(id, data.name, data.role);
+            list.appendChild(item);
+            rendered.add(id);
         });
+
+        if (keyword.length > 0) {
+            allMembers.forEach(member => {
+                if (!rendered.has(member.id.toString()) && member.name.toLowerCase().includes(keyword)) {
+                    const item = createMemberItem(member.id, member.name, '');
+                    list.appendChild(item);
+                }
+            });
+        }
+    }
+
+    function createMemberItem(id, name, selectedRole) {
+        const item = document.createElement("div");
+        item.className = "member-item";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "member-name";
+        nameSpan.textContent = name;
+
+        const select = document.createElement("select");
+        select.className = "role-select";
+        select.innerHTML = '<option disabled selected>Pilih Peran</option>' +
+            roles.map(role => `<option value="${role}">${role}</option>`).join('');
+        if (selectedRole) select.value = selectedRole;
+
+        select.addEventListener("change", () => {
+            selectedMembers.set(id.toString(), { name: name, role: select.value });
+            updateHiddenField();
+        });
+
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "remove-btn";
+        removeBtn.textContent = "×";
+        removeBtn.onclick = () => {
+            selectedMembers.delete(id.toString());
+            updateHiddenField();
+            filterAnggota(document.querySelector(".search-input").value);
+        };
+
+        item.appendChild(nameSpan);
+        const selectWrapper = document.createElement("div");
+        selectWrapper.className = "select-wrapper";
+        selectWrapper.appendChild(select);
+        item.appendChild(selectWrapper);
+        item.appendChild(removeBtn);
+        return item;
     }
 
     function updateHiddenField() {
         const hiddenInput = document.getElementById("members-hidden");
-        const ids = Array.from(selectedMembers.keys());
-        hiddenInput.value = ids.join(",");
+        const data = [];
+        selectedMembers.forEach((val, id) => {
+            data.push(`${id}:${val.role}`);
+        });
+        hiddenInput.value = data.join(",");
     }
+
+    document.addEventListener("DOMContentLoaded", updateHiddenField);
 </script>
 
 {% endblock %}

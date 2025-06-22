@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% block title %}{{ aktivitas|default_if_none:''|yesno:"Edit,Tambah" }} Aktivitas{% endblock %}
+{% block content %}
+
+<style>
+    .project-popup {
+        background-color: #525252;
+        color: white;
+        padding: 24px 30px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 800px;
+        margin: 40px auto;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        position: relative;
+        box-sizing: border-box;
+    }
+
+    .project-popup h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        background-color: #dc3545;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        text-align: center;
+        line-height: 24px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    input, textarea, select, button {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: none;
+        border-radius: 6px;
+        background-color: #dcdcdc;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .btn-center-small {
+        background-color: #1a2b44;
+        color: white;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .btn-submit-center {
+        width: auto;
+        display: block;
+        margin: 20px auto 10px auto;
+        padding: 10px 30px;
+        background-color: #1a2b44;
+        color: white;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        border: none;
+    }
+
+    .btn-submit-center:hover,
+    .btn-center-small:hover {
+        background-color: #2e4171;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .modal-content {
+        background-color: #525252;
+        padding: 20px;
+        border-radius: 14px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-sizing: border-box;
+        position: relative;
+        color: white;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        text-align: center;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 16px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        background-color: #e9e9e9;
+    }
+
+    .member-list {
+        margin-bottom: 20px;
+    }
+
+    .member-item {
+        background-color: #1a2b44;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .checkmark {
+        font-size: 16px;
+        font-weight: bold;
+        color: #00ff88;
+    }
+
+    .btn-small-white {
+        display: block;
+        margin: 20px auto 0 auto;
+        padding: 10px 30px;
+        background-color: #1a2b44;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        text-align: center;
+        width: auto;
+    }
+
+    .btn-small-white:hover {
+        background-color: #2e4171;
+    }
+
+    @media (max-width: 500px) {
+        .project-popup h2 {
+            font-size: 20px;
+        }
+
+        .btn-submit-center {
+            width: 100%;
+        }
+
+        .btn-center-small {
+            width: 100%;
+        }
+
+        .btn-small-white {
+            width: 100%;
+        }
+
+        .modal-content {
+            padding: 16px;
+        }
+    }
+</style>
+
+<div class="project-popup">
+    <span class="close-btn" onclick="window.history.back()">×</span>
+    <h2>{{ aktivitas|default_if_none:''|yesno:"Edit,Tambah" }} Aktivitas</h2>
+    <form method="post">
+        {% csrf_token %}
+        <label>Nama Aktivitas</label>
+        {{ form.nama }}
+
+        <label>Waktu Pelaksanaan</label>
+        {{ form.waktu_pelaksanaan }}
+
+        <label>Pelaksana</label>
+        <button type="button" onclick="openModal()" class="btn-center-small">Pilih Pelaksana</button>
+        <input type="hidden" name="pelaksana" id="pelaksana-hidden">
+
+        <button type="submit" class="btn btn-submit-center">Selesai</button>
+    </form>
+</div>
+
+<!-- Modal Pilih Pelaksana -->
+<div class="modal" id="anggotaModal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">×</span>
+        <h3 style="text-align:center;">Pilih Pelaksana</h3>
+        <input type="text" class="search-input" placeholder="Cari nama..." onkeyup="filterAnggota(this.value)">
+        <div id="anggotaList" class="member-list"></div>
+        <button class="btn-small-white" onclick="updateHiddenField(); closeModal();">Add</button>
+    </div>
+</div>
+
+<script>
+    const allMembers = [
+        {% for anggota in anggota_list %}
+            { id: '{{ anggota.id }}', name: "{{ anggota.name|escapejs }}" },
+        {% endfor %}
+    ];
+
+    let selectedPelaksana = new Map();
+
+    function openModal() {
+        document.getElementById("anggotaModal").style.display = "flex";
+        filterAnggota('');
+    }
+
+    function closeModal() {
+        document.getElementById("anggotaModal").style.display = "none";
+    }
+
+    function filterAnggota(keyword) {
+        const list = document.getElementById("anggotaList");
+        list.innerHTML = '';
+        keyword = keyword.toLowerCase().trim();
+        const shown = new Set();
+
+        selectedPelaksana.forEach((name, id) => {
+            const item = createMemberItem({ id, name });
+            list.appendChild(item);
+            shown.add(id);
+        });
+
+        if (keyword.length > 0) {
+            allMembers.forEach(member => {
+                if (!shown.has(member.id) && member.name.toLowerCase().includes(keyword)) {
+                    list.appendChild(createMemberItem(member));
+                }
+            });
+        }
+    }
+
+    function createMemberItem(member) {
+        const item = document.createElement("div");
+        item.className = "member-item";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = member.name;
+
+        const check = document.createElement("span");
+        check.className = "checkmark";
+        check.innerHTML = selectedPelaksana.has(member.id) ? "✔" : "";
+
+        item.appendChild(nameSpan);
+        item.appendChild(check);
+
+        item.onclick = () => {
+            if (selectedPelaksana.has(member.id)) {
+                selectedPelaksana.delete(member.id);
+            } else {
+                selectedPelaksana.set(member.id, member.name);
+            }
+            updateHiddenField();
+            filterAnggota(document.querySelector(".search-input").value);
+        };
+
+        return item;
+    }
+
+    function updateHiddenField() {
+        document.getElementById("pelaksana-hidden").value = Array.from(selectedPelaksana.keys()).join(',');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const initialPelaksana = "{{ aktivitas.pelaksana|default:'' }}";
+        const names = initialPelaksana.split(",").map(n => n.trim());
+        allMembers.forEach(member => {
+            if (names.includes(member.name)) {
+                selectedPelaksana.set(member.id, member.name);
+            }
+        });
+        updateHiddenField();
+        filterAnggota('');
+    });
+</script>
+
+{% endblock %}

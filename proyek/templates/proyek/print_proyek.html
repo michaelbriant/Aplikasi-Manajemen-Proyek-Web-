@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak Proyek</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 30px;
+            color: #000;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        h2, h3 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #000;
+        }
+
+        .label {
+            font-weight: bold;
+            width: 140px;
+            vertical-align: top;
+            padding-right: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+
+        th, td {
+            border: 1px solid #aaa;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .aktivitas-heading {
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .no-data {
+            font-style: italic;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        ul {
+            margin: 4px 0;
+            padding-left: 18px;
+        }
+
+        @media print {
+            body {
+                zoom: 95%;
+            }
+
+            @page {
+                margin: 20mm;
+            }
+
+            h2, h3 {
+                page-break-after: avoid;
+            }
+
+            table, tr, td, th {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Profile Project</h2>
+
+    <!-- Detail Proyek -->
+    <table style="width: 100%; margin-bottom: 30px;">
+        <tr>
+            <td class="label">Nama:</td>
+            <td>{{ proyek.name }}</td>
+        </tr>
+        <tr>
+            <td class="label">Deskripsi:</td>
+            <td>{{ proyek.description }}</td>
+        </tr>
+        <tr>
+            <td class="label">Lokasi:</td>
+            <td>{{ proyek.location }}</td>
+        </tr>
+        <tr>
+            <td class="label">Tanggal Mulai:</td>
+            <td>{{ proyek.start_date }}</td>
+        </tr>
+        <tr>
+            <td class="label">Tanggal Selesai:</td>
+            <td>{{ proyek.end_date }}</td>
+        </tr>
+        <tr>
+            <td class="label">Supervisor:</td>
+            <td>{{ proyek.supervisor }}</td>
+        </tr>
+        <tr>
+            <td class="label">Status:</td>
+            <td>{{ proyek.get_status_display }}</td>
+        </tr>
+        <tr>
+            <td class="label">Dibuat pada:</td>
+            <td>{{ proyek.created_at|date:"d M Y H:i" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Terakhir diperbarui:</td>
+            <td>{{ proyek.updated_at|date:"d M Y H:i" }}</td>
+        </tr>
+        <tr>
+            <td class="label" style="vertical-align: top;">Pelaksana:</td>
+            <td>
+                {% if pelaksana %}
+                    <ul>
+                        {% for pm in pelaksana %}
+                            <li>{{ pm.member.name }} – {{ pm.role|default:"(Tidak ada peran)" }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <span class="no-data">Belum ada pelaksana.</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <!-- Daftar Pekerjaan -->
+    <h3>Daftar Pekerjaan</h3>
+    {% if pekerjaan_list %}
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Pekerjaan</th>
+                    <th>Deskripsi</th>
+                    <th>Lokasi</th>
+                    <th>Tanggal</th>
+                    <th>Supervisor</th>
+                    <th>Pelaksana</th>
+                    <th>Dibuat</th>
+                    <th>Diubah</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pekerjaan in pekerjaan_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ pekerjaan.nama }}</td>
+                        <td>{{ pekerjaan.deskripsi }}</td>
+                        <td>{{ pekerjaan.lokasi }}</td>
+                        <td>{{ pekerjaan.tanggal_mulai }} – {{ pekerjaan.tanggal_selesai }}</td>
+                        <td>{{ pekerjaan.supervisor }}</td>
+                        <td>{{ pekerjaan.pelaksana|default:"-" }}</td>
+                        <td>{{ pekerjaan.created_at|date:"d M Y H:i" }}</td>
+                        <td>{{ pekerjaan.updated_at|date:"d M Y H:i" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Daftar Aktivitas -->
+        {% for pekerjaan in pekerjaan_list %}
+            <div>
+                <div class="aktivitas-heading">Aktivitas untuk: {{ pekerjaan.nama }}</div>
+                {% if pekerjaan.aktivitas.all and pekerjaan.aktivitas.all|length > 0 %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Aktivitas</th>
+                                <th>Tanggal</th>
+                                <th>Pelaksana</th>
+                                <th>Dibuat</th>
+                                <th>Diubah</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for aktivitas in pekerjaan.aktivitas.all %}
+                                <tr>
+                                    <td>{{ aktivitas.nama }}</td>
+                                    <td>{{ aktivitas.waktu_pelaksanaan }}</td>
+                                    <td>{{ aktivitas.pelaksana|default:"-" }}</td>
+                                    <td>{{ aktivitas.created_at|date:"d M Y H:i" }}</td>
+                                    <td>{{ aktivitas.updated_at|date:"d M Y H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="no-data">Tidak ada aktivitas untuk pekerjaan ini.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="no-data">Belum ada pekerjaan pada proyek ini.</p>
+    {% endif %}
+
+    <script>
+        window.onload = function () {
+            window.print();
+        };
+    </script>
+</body>
+</html>

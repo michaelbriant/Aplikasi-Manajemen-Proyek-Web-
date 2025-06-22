@@ -3,273 +3,271 @@
 
 {% block content %}
 <style>
-    body {
-        background-color: #c5cbe3; /* warna background halaman utama seperti di Figma */
-        font-family: Arial, sans-serif;
-    }
-
-    h1 {
+    h2 {
         color: #222;
         margin-bottom: 20px;
     }
 
-    .project-button {
-        background-color: #28304e;
-        color: white;
-        padding: 12px 20px;
-        margin-bottom: 15px;
-        border: none;
-        width: 100%;
-        font-size: 18px;
+    .btn-tutup-proyek {
+        background-color: transparent;
+        color: #ff6f00;
+        border: 2px solid #ff6f00;
+        font-weight: bold;
+        text-align: center;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.3s;
+        padding: 8px 10px;
+        font-size: 13px;
         cursor: pointer;
-        border-radius: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
     }
 
-    .project-actions a {
+    .btn-tutup-proyek:hover {
+        background-color: #ff6f00;
         color: white;
-        margin-left: 10px;
-        font-size: 20px;
         text-decoration: none;
     }
 
-    .project-actions a:hover {
-        color: #aaa;
+    .homepage-container {}
+
+    .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+        margin-bottom: 30px;
+        gap: 10px;
+        flex-wrap: wrap;
     }
 
-    .popup-overlay,
-    .mini-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.25);
-        z-index: 999;
-    }
-
-    .project-popup {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #2d2a2a; /* warna gelap popup */
-        color: black;
-        padding: 20px 25px 25px 25px;
-        border-radius: 12px;
-        width: 900px;           /* lebar diperlebar */
-        max-height: 95vh;       /* tinggi diperpanjang jadi 95vh */
-        overflow-y: auto;       /* scroll vertikal jika isi terlalu tinggi */
-        z-index: 1000;
-        font-size: 14px;
-        font-weight: 600;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        box-sizing: border-box;
-    }
-
-    .project-popup h2 {
-        text-align: center;
-        margin-bottom: 25px;
-        font-weight: 700;
-        font-size: 22px;
-        color: white;
-    }
-
-    .project-popup .close-btn {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background-color: #b41e1e; /* merah gelap */
-        color: white;
-        width: 28px;
-        height: 28px;
-        border-radius: 3px;
-        text-align: center;
-        line-height: 28px;
-        font-weight: bold;
-        font-size: 20px;
-        cursor: pointer;
-    }
-
-    .popup-section label {
-        display: block;
-        margin-bottom: 2px;
-        font-size: 13px;
-        font-weight: 700;
-        color: white;
-    }
-
-    .popup-section input {
+    .search-form {
+        flex: 1;
+        display: flex;
         width: 100%;
-        padding: 6px 10px;  /* padding lebih kecil */
-        margin-bottom: 8px; /* jarak bawah lebih kecil */
-        border: none;
-        border-radius: 6px;
-        background-color: #a9a9a9; /* abu abu sesuai desain */
-        color: black;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: not-allowed;
-        box-sizing: border-box;
     }
 
-    .popup-buttons {
+    .search-form input[type="text"] {
+        flex: 1;
+        padding: 10px 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #f1f8ff;
+        font-size: 14px;
+        height: 46px;
+        box-sizing: border-box;
+        width: 100%;
+    }
+
+    .add-btn {
+        background-color: #1a2b44;
+        color: white;
+        padding: 0 25px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        white-space: nowrap;
+        min-width: 120px;
+    }
+
+    .add-btn:hover {
+        background-color: #2a3d64;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    table {
+        width: 100%;
+        min-width: 1000px;
+        border-collapse: collapse;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        font-size: 14px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    th {
+        background-color: #1a2b44;
+        color: white;
+        text-align: center;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .action-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .action-group-wrapper {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin-top: 16px;
+        justify-content: center;
+        align-items: stretch;
+        height: 100%;
     }
 
-    .popup-buttons button {
-        padding: 12px;
-        border: none;
+    .action-btn {
+        text-align: center;
+        font-weight: bold;
+        font-size: 13px;
+        border: 2px solid transparent;
+        padding: 8px 10px;
         border-radius: 6px;
         cursor: pointer;
-        background-color: #17295b; /* biru gelap */
+        text-decoration: none;
+        transition: all 0.3s;
+        background-color: transparent;
+        box-sizing: border-box;
+    }
+
+    .edit-btn { color: #2c6ed5; border-color: #2c6ed5; }
+    .edit-btn:hover { background-color: #2c6ed5; color: white; }
+
+    .delete-btn { color: #d33; border-color: #d33; }
+    .delete-btn:hover { background-color: #d33; color: white; }
+
+    .lihat-btn { color: #555; border-color: #555; }
+    .lihat-btn:hover { background-color: #555; color: white; }
+
+    .print-btn { color: #4caf50; border-color: #4caf50; }
+    .print-btn:hover { background-color: #4caf50; color: white; }
+
+    .tutup-proyek-container {
+        grid-column: 1 / -1;
+        margin-top: 2px;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 8px 12px;
+        background-color: #28a745;
         color: white;
-        font-weight: 700;
-        font-size: 14px;
-        transition: background-color 0.3s ease;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: bold;
+        text-align: center;
         width: 100%;
         box-sizing: border-box;
     }
 
-    .popup-buttons button:hover {
-        background-color: #32478a;
-    }
+    @media (max-width: 768px) {
+        .action-group {
+            grid-template-columns: 1fr !important;
+        }
 
-    .mini-popup {
-        display: none;
-        position: fixed;
-        top: 25%;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #1d1f27;
-        color: white;
-        padding: 20px;
-        border-radius: 12px;
-        width: 450px;
-        z-index: 1001;
-        box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
+        .add-btn {
+            width: 100%;
+        }
 
-    .mini-popup h3 {
-        margin-top: 0;
-    }
+        .search-form input[type="text"] {
+            width: 100%;
+        }
 
-    .mini-popup p {
-        margin: 5px 0;
-    }
-
-    .mini-popup .close-mini {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        color: #d33;
-        font-size: 20px;
-        cursor: pointer;
-        font-weight: bold;
+        .search-form {
+            margin-bottom: 10px;
+        }
     }
 </style>
 
-<h1>Welcome, {{ user.username }}</h1>
-
-{% for proyek in semua_proyek %}
-    <button class="project-button" onclick="showPopup('popup-{{ proyek.id }}')">
-        {{ proyek.name }}
-        <div class="project-actions">
-            <a href="{% url 'edit_proyek' proyek.id %}" title="Edit">✏️</a>
-            <a href="{% url 'hapus_proyek' proyek.id %}" title="Hapus" onclick="return confirm('Yakin ingin menghapus proyek ini?')">🗑️</a>
-        </div>
-    </button>
-
-    <div class="popup-overlay" id="overlay-{{ proyek.id }}"></div>
-
-    <div class="project-popup" id="popup-{{ proyek.id }}">
-        <span class="close-btn" onclick="hidePopup('popup-{{ proyek.id }}')">&times;</span>
-        <h2>Profil Proyek</h2>
-        <div class="popup-section">
-            <label>Nama Proyek</label>
-            <input type="text" value="{{ proyek.name }}" disabled>
-            <label>Deskripsi Singkat</label>
-            <input type="text" value="{{ proyek.description }}" disabled>
-            <label>Lokasi</label>
-            <input type="text" value="{{ proyek.location }}" disabled>
-            <label>Tanggal Mulai</label>
-            <input type="text" value="{{ proyek.start_date }}" disabled>
-            <label>Tanggal Selesai</label>
-            <input type="text" value="{{ proyek.end_date }}" disabled>
-            <label>Supervisor</label>
-            <input type="text" value="{{ proyek.supervisor }}" disabled>
-        </div>
-
-        <div class="popup-buttons">
-            <button onclick="showMiniPopup('anggota', '{{ proyek.id }}')">Anggota</button>
-            <button onclick="showMiniPopup('aktivitas', '{{ proyek.id }}')">Aktivitas Pekerjaan</button>
-        </div>
+<div class="homepage-container">
+    <div class="header-bar">
+        <form method="get" class="search-form" onsubmit="return false;">
+            <input type="text" id="searchInput" placeholder="Cari proyek..." value="{{ request.GET.q }}">
+        </form>
+        <button class="add-btn" onclick="window.location.href='{% url 'tambah_proyek' %}'">Tambah Proyek</button>
     </div>
 
-    <!-- Mini popups -->
-    <div class="mini-overlay" id="mini-overlay-{{ proyek.id }}"></div>
-
-    <div class="mini-popup" id="mini-anggota-{{ proyek.id }}">
-        <span class="close-mini" onclick="hideMiniPopup('{{ proyek.id }}')">&times;</span>
-        <h3>Anggota</h3>
-        {% if proyek.members.all %}
-            {% for anggota in proyek.members.all %}
-                <p>{{ anggota.name }} – {{ anggota.role }}</p>
-            {% endfor %}
-        {% else %}
-            <p>Belum ada anggota.</p>
-        {% endif %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nama Proyek</th>
+                    <th>Deskripsi Proyek</th>
+                    <th>Lokasi</th>
+                    <th>Tanggal Mulai</th>
+                    <th>Tanggal Selesai</th>
+                    <th>Supervisor</th>
+                    <th>Status Proyek</th>
+                    <th>Pelaksana</th>
+                    <th>Dibuat</th>
+                    <th>Terakhir Diubah</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="projectTable">
+                {% for proyek in semua_proyek %}
+                <tr data-name="{{ proyek.name|lower }}">
+                    <td>{{ proyek.name }}</td>
+                    <td>{{ proyek.description }}</td>
+                    <td>{{ proyek.location }}</td>
+                    <td>{{ proyek.start_date }}</td>
+                    <td>{{ proyek.end_date }}</td>
+                    <td>{{ proyek.supervisor }}</td>
+                    <td>{{ proyek.get_status_display }}</td>
+                    <td>
+                        {% for pm in proyek.projectmember_set.all %}
+                            • {{ pm.member.name }} – {{ pm.role|default:"No Role" }}<br>
+                        {% empty %}
+                            <em>Belum ada pelaksana</em>
+                        {% endfor %}
+                    </td>
+                    <td>{{ proyek.created_at|date:"d M Y H:i" }}</td>
+                    <td>{{ proyek.updated_at|date:"d M Y H:i" }}</td>
+                    <td>
+                        <div class="action-group-wrapper">
+                            <div class="action-group">
+                                <a href="{% url 'edit_proyek' proyek.id %}" class="action-btn edit-btn">Ubah</a>
+                                <a href="{% url 'hapus_proyek' proyek.id %}" class="action-btn delete-btn" onclick="return confirm('Yakin ingin menghapus proyek ini?')">Hapus</a>
+                                <a href="{% url 'print_proyek' proyek.id %}" target="_blank" class="action-btn print-btn">Cetak</a>
+                                <a href="{% url 'daftar_pekerjaan' proyek.id %}" class="action-btn lihat-btn">Pekerjaan</a>
+                            </div>
+                            <div class="tutup-proyek-container">
+                                {% if proyek.status != 'Selesai' %}
+                                    <form action="{% url 'tutup_proyek' proyek.id %}" method="post" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-tutup-proyek">Tutup Proyek</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-
-    <div class="mini-popup" id="mini-aktivitas-{{ proyek.id }}">
-        <span class="close-mini" onclick="hideMiniPopup('{{ proyek.id }}')">&times;</span>
-        <h3>Aktivitas</h3>
-        {% if proyek.activities.all %}
-            {% for aktivitas in proyek.activities.all %}
-                <div style="margin-bottom: 10px;">
-                    <p><strong>Nama:</strong> {{ aktivitas.name }}</p>
-                    <p><strong>Waktu:</strong> {{ aktivitas.time }}</p>
-                    <p><strong>Perencana:</strong> {{ aktivitas.planner }}</p>
-                    <p><strong>Catatan:</strong>
-                        {% if aktivitas.notes %}
-                            <a href="{{ aktivitas.notes.url }}" target="_blank" style="color: lightblue;">Download</a>
-                        {% else %}
-                            Tidak ada catatan
-                        {% endif %}
-                    </p>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>Tidak ada aktivitas pekerjaan.</p>
-        {% endif %}
-    </div>
-{% endfor %}
+</div>
 
 <script>
-    function showPopup(id) {
-        document.getElementById(id).style.display = 'block';
-        document.getElementById('overlay-' + id.split('-')[1]).style.display = 'block';
-    }
-
-    function hidePopup(id) {
-        document.getElementById(id).style.display = 'none';
-        document.getElementById('overlay-' + id.split('-')[1]).style.display = 'none';
-    }
-
-    function showMiniPopup(type, id) {
-        document.getElementById('mini-' + type + '-' + id).style.display = 'block';
-        document.getElementById('mini-overlay-' + id).style.display = 'block';
-    }
-
-    function hideMiniPopup(id) {
-        document.getElementById('mini-anggota-' + id).style.display = 'none';
-        document.getElementById('mini-aktivitas-' + id).style.display = 'none';
-        document.getElementById('mini-overlay-' + id).style.display = 'none';
-    }
+    document.getElementById("searchInput").addEventListener("input", function () {
+        const keyword = this.value.toLowerCase();
+        const rows = document.querySelectorAll("#projectTable tr");
+        rows.forEach(row => {
+            const name = row.getAttribute("data-name");
+            row.style.display = name.includes(keyword) ? "" : "none";
+        });
+    });
 </script>
 {% endblock %}

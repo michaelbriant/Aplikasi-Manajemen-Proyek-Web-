@@ -1,22 +1,36 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
     <title>{% block title %}Manajemen Proyek{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             margin: 0;
             font-family: 'Segoe UI', sans-serif;
             background-color: #ffffff;
+            overflow-x: hidden;
         }
 
+        /* Sidebar Styles */
         .sidebar {
             width: 260px;
             height: 100vh;
             background-color: #cde3f6;
             padding: 20px;
             box-sizing: border-box;
-            position: fixed; /* ✅ agar tetap menempel saat scroll */
+            position: fixed;
             top: 0;
+            left: -260px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            justify-content: start;
+            transition: left 0.3s ease-in-out;
+        }
+
+        .sidebar.open {
             left: 0;
         }
 
@@ -24,12 +38,16 @@
             color: #1a2b44;
             font-size: 18px;
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+        }
+
+        .nav-links {
+            flex-grow: 1;
         }
 
         .sidebar a {
             display: block;
-            margin: 20px auto;
+            margin: 12px auto;
             background-color: #1a2b44;
             color: white;
             padding: 10px 20px;
@@ -37,7 +55,7 @@
             text-align: center;
             text-decoration: none;
             border-radius: 10px;
-            transition: 0.2s;
+            transition: all 0.3s ease-in-out;
             font-size: 14px;
         }
 
@@ -45,13 +63,140 @@
             background-color: #3e5c7f;
         }
 
-        .content {
-            margin-left: 260px; /* ✅ sesuai dengan width sidebar */
-            padding: 30px;
+        .sidebar a.active {
             background-color: #ffffff;
-            min-height: 100vh; /* agar bisa scroll tanpa terpotong */
+            color: #5a90c5;
+            font-weight: bold;
+        }
+
+        .sidebar .logout-btn {
+            background-color: #e74c3c;
+        }
+
+        .sidebar .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+
+
+        /* Overlay untuk mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+            border-bottom: 1px solid #e1e8ed;
+            padding: 15px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-sizing: border-box;
+            position: static;
+            z-index: 999;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .hamburger-btn:hover {
+            background-color: rgba(26, 43, 68, 0.1);
+        }
+
+        .hamburger-icon {
+            width: 24px;
+            height: 18px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hamburger-icon span {
+            display: block;
+            height: 2px;
+            width: 100%;
+            background-color: #1a2b44;
+            border-radius: 1px;
+            opacity: 1;
+            transition: 0.25s ease-in-out;
+        }
+
+        .header-left h1 {
+            color: #1a2b44;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1a2b44;
+            font-size: 13px;
+        }
+
+        .user-avatar {
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #5a90c5, #1a2b44);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .content {
+            margin-left: 0;
+            padding: 20px;
+            background-color: #ffffff;
+            min-height: calc(100vh - 60px);
             box-sizing: border-box;
             position: relative;
+        }
+
+        .content-inner {
+            margin-top: 0;
+            min-height: calc(100vh - 100px);
         }
 
         .top-right {
@@ -60,9 +205,16 @@
             right: 20px;
         }
 
-        .top-right img {
-            margin-left: 10px;
-            width: 28px;
+        .top-right img.icon {
+            width: 48px;
+            height: 48px;
+            margin-left: 16px;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        .top-right img.icon:hover {
+            transform: scale(1.1);
         }
 
         input, select, textarea {
@@ -86,23 +238,162 @@
         button:hover {
             background-color: #3e5c7f;
         }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: nowrap;
+            overflow-x: auto;        /* biarkan bisa scroll horizontal kalau terlalu panjang */
+        }
+
+        .header-left h1 {
+            white-space: nowrap;
+            overflow: visible;       /* jangan potong */
+            text-overflow: unset;
+            max-width: none;         /* jangan dibatasi lebar */
+            flex-shrink: 0;          /* jangan mengecilkan h1 */
+        }
+
+        .header {
+            overflow-x: auto;
+        }
+
+        /* Media query untuk mobile */
+        @media (max-width: 767px) {
+            .header {
+                padding: 12px 16px;
+                height: 55px;
+            }
+
+            .header-left h1 {
+                font-size: 16px;
+            }
+
+            .user-info {
+                font-size: 12px;
+            }
+
+            .user-avatar {
+                width: 24px;
+                height: 24px;
+                font-size: 10px;
+            }
+
+            .content {
+                min-height: calc(100vh - 55px);
+            }
+
+            .content-inner {
+                margin-top: 0;
+                min-height: calc(100vh - 95px);
+            }
+
+            .hamburger-icon {
+                width: 20px;
+                height: 16px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>Profile Team</h2>
-        <a href="{% url 'homepage' %}">Home</a>
-        <a href="{% url 'tambah_proyek' %}">Project</a>
-        <a href="{% url 'list_anggota' %}">Profile Team</a>
-        <a href="#">View Progress</a>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="nav-links">
+            <h2>Selamat Datang {{ user.username }}</h2>
+            <a href="{% url 'homepage' %}"
+               class="{% if request.path == '/homepage' or 'proyek' in request.path or 'pekerjaan' in request.path or 'aktivitas' in request.path %}active{% endif %}">
+                Halaman Utama
+            </a>
+            <a href="{% url 'list_anggota' %}"
+               class="{% if 'profile-team' in request.path or 'anggota' in request.path %}active{% endif %}">
+                Pelaksana
+            </a>
+            <a href="{% url 'progres_proyek' %}"
+               class="{% if 'progress' in request.path %}active{% endif %}">
+                Progres
+            </a>
+            <a href="{% url 'integrasi' %}"
+               class="{% if 'pesan' in request.path %}active{% endif %}">
+                Pesan
+            </a>
+        </div>
+
+        <a href="{% url 'logout' %}" class="logout-btn">Keluar</a>
+    </div>
+
+    <!-- Header Section -->
+    <div class="header">
+        <div class="header-left">
+            <button class="hamburger-btn" id="hamburgerBtn">
+                <div class="hamburger-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </button>
+            <h1>
+                Manajemen Proyek
+                <span style="color: #7a8a9a; font-weight: 400;"> | </span>
+                <span style="color: #5a90c5; font-weight: 500;">
+                    {% if request.path == '/homepage' or 'proyek' in request.path or 'pekerjaan' in request.path or 'aktivitas' in request.path %}
+                        Halaman Utama
+                    {% elif 'profile-team' in request.path or 'anggota' in request.path %}
+                        Pelaksana
+                    {% elif 'progress' in request.path %}
+                        Progres
+                    {% elif 'pesan' in request.path %}
+                        Pesan
+                    {% else %}
+                        Dashboard
+                    {% endif %}
+                </span>
+            </h1>
+        </div>
+        <div class="header-right">
+            <!-- Profil dihapus -->
+        </div>
     </div>
 
     <div class="content">
-        <div class="top-right">
-            <img src="https://www.svgrepo.com/show/384674/account-avatar-profile-user.svg">
-            <img src="https://www.svgrepo.com/show/512817/settings.svg">
+        <div class="content-inner">
+            <div class="top-right">
+                <!-- Bisa taruh ikon profil atau notifikasi -->
+            </div>
+            {% block content %}{% endblock %}
         </div>
-        {% block content %}{% endblock %}
     </div>
+
+    <script>
+        // JavaScript untuk hamburger menu
+        document.addEventListener('DOMContentLoaded', function() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            // Buka sidebar
+            hamburgerBtn.addEventListener('click', function() {
+                sidebar.classList.add('open');
+                sidebarOverlay.classList.add('active');
+            });
+
+            // Tutup sidebar dengan klik overlay
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('active');
+            });
+
+            // Tutup sidebar dengan tombol Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    sidebarOverlay.classList.remove('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

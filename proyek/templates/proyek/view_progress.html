@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}Progres Proyek{% endblock %}
+{% block content %}
+
+<h2 style="text-align:center; color: #1a2b44; font-weight: bold; margin-top: 20px;">
+    Rentang Waktu dan Status Proyek Tahun {{ selected_year }}
+</h2>
+
+<form method="get" style="text-align: center; margin: 20px 0;">
+    <select name="year" onchange="this.form.submit()" class="year-select">
+        {% for year in years %}
+            <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+<div class="chart-container">
+    <canvas id="grafikProyek"></canvas>
+</div>
+
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+    <div class="legend-box">
+        <span style="color: green;">Selesai</span>
+        <span style="color: yellow;">Berlangsung</span>
+        <span style="color: orange;">Tertunda</span>
+        <span style="color: red;">Berhenti</span>
+        <span style="color: gray;">Perencanaan</span>
+        <span style="color: dodgerblue;">Siap untuk Dideploy</span>
+    </div>
+</div>
+
+<style>
+.chart-container {
+    display: flex;
+    justify-content: center;
+    padding: 0 20px;
+}
+#grafikProyek {
+    background-color: #1a2b44;
+    border-radius: 12px;
+    height: 300px;
+    width: 100%;
+    max-width: 900px;
+}
+
+.year-select {
+    padding: 8px 14px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 160px;
+}
+
+.legend-box {
+    background-color: #1a2b44;
+    padding: 10px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    border-radius: 24px;
+    width: fit-content;
+}
+
+.legend-box span {
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.legend-box span::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background-color: currentColor;
+}
+
+@media (max-width: 768px) {
+    .year-select {
+        width: 100%;
+        max-width: 240px;
+    }
+}
+@media (max-width: 480px) {
+    .legend-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+
+<script>
+    const proyekData = {{ data_proyek_json|safe }};
+
+    const ctx = document.getElementById('grafikProyek').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: proyekData.map(p => p.nama),
+            datasets: proyekData.map(p => ({
+                label: p.nama,
+                data: [{
+                    x: [p.mulai, p.selesai],
+                    y: p.nama
+                }],
+                backgroundColor:
+                    p.status === 'Selesai'     ? 'rgba(0, 128, 0, 0.8)' :
+                    p.status === 'Berlangsung' ? 'rgba(255, 215, 0, 0.8)' :
+                    p.status === 'Tertunda'    ? 'rgba(255, 165, 0, 0.8)' :
+                    p.status === 'Berhenti'    ? 'rgba(255, 0, 0, 0.8)' :
+                    p.status === 'Perencanaan' ? 'rgba(160, 160, 160, 0.8)' :
+                    p.status === 'Siap untuk Dideploy' ? 'rgba(30, 144, 255, 0.8)' :
+                    'rgba(180, 180, 180, 0.6)',
+                borderRadius: 4,
+                barThickness: 24
+            }))
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 10,
+                    right: 24,  // ✅ tambahan padding kanan agar tidak mepet
+                    bottom: 10,
+                    left: 10
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'month',
+                        tooltipFormat: 'MMMM yyyy',
+                        displayFormats: {
+                            month: 'MMM'
+                        }
+                    },
+                    min: '{{ selected_year }}-01-01',
+                    max: '{{ selected_year }}-12-31',
+                    grid: { color: 'white' },
+                    title: {
+                        display: true,
+                        text: 'Bulan',
+                        color: 'white'
+                    },
+                    ticks: { color: 'white' }
+                },
+                y: {
+                    grid: { color: 'white' },
+                    ticks: { color: 'white' },
+                    title: {
+                        display: true,
+                        text: 'Nama Proyek',
+                        color: 'white'
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const [start, end] = context.raw.x;
+                            const startDate = new Date(start);
+                            const endDate = new Date(end);
+                            const formattedStart = startDate.toLocaleDateString('id-ID');
+                            const formattedEnd = endDate.toLocaleDateString('id-ID');
+                            return `${context.dataset.label}: ${formattedStart} - ${formattedEnd}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}

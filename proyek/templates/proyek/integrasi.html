@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 40px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 1px 5px rgba(0,0,0,0.05);">
+    <h2 style="color: #444; font-weight: normal;">Manajemen Proyek - Integrasi Modul</h2>
+
+    <div class="form-group" style="margin-bottom: 20px;">
+        <label for="modul-select" style="font-weight: 500; color: #555;">Pilih Modul:</label>
+        <select id="modul-select" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ccc;">
+            <option value="">-- Pilih --</option>
+            <option value="ie">Intelligence Engineering</option>
+            <option value="ic">Intelligence Creation</option>
+            <option value="imp">Implementation</option>
+        </select>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 20px;">
+        <label for="project-select" style="font-weight: 500; color: #555;">Pilih Proyek:</label>
+        <select id="project-select" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ccc;">
+            {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button id="check-button" style="background: #4a90e2; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 14px; cursor: pointer;">
+        Periksa Status
+    </button>
+
+    <div id="status-result" style="margin-top: 20px; padding: 15px; border-radius: 6px; background: #f8f9fa; min-height: 20px; border-left: 4px solid #4a90e2;"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const checkButton = document.getElementById("check-button");
+    const resultDiv = document.getElementById("status-result");
+
+    checkButton.addEventListener("click", function () {
+        const modul = document.getElementById("modul-select").value;
+        const selectedProjectId = parseInt(document.getElementById("project-select").value);
+
+        if (!modul) {
+            showResult("Pilih modul terlebih dahulu", "error");
+            return;
+        }
+
+        checkButton.textContent = "Checking...";
+        checkButton.disabled = true;
+
+        let apiUrl = "";
+        if (modul === "ie") {
+            apiUrl = "https://fabyaanusakti.pythonanywhere.com/api/status-only/";
+        } else if (modul === "ic") {
+            apiUrl = "https://arlellll.pythonanywhere.com/api-content/project-statuses/";
+        } else if (modul === "imp") {
+            apiUrl = "https://tasana.pythonanywhere.com/api/project-status/";
+        }
+
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                let proyek = null;
+
+                if (modul === "ie") {
+                    proyek = data.find(p => p.id === selectedProjectId);
+                } else if (modul === "ic" || modul === "imp") {
+                    proyek = data.find(p => parseInt(p.external_id) === selectedProjectId);
+                }
+
+                if (proyek) {
+                    showResult(`Status Proyek: <strong>${proyek.status}</strong>`, "success");
+                } else {
+                    showResult("Proyek tidak ditemukan dalam sistem ini", "error");
+                }
+            })
+            .catch(error => {
+                showResult("❌ Gagal mengambil status", "error");
+                console.error("Error:", error);
+            })
+            .finally(() => {
+                checkButton.textContent = "Periksa Status";
+                checkButton.disabled = false;
+            });
+
+        function showResult(message, type) {
+            resultDiv.innerHTML = message;
+            resultDiv.style.background = type === "error" ? "#fff5f5" : "#f0fff4";
+            resultDiv.style.borderLeftColor = type === "error" ? "#e53e3e" : "#38a169";
+            resultDiv.style.color = type === "error" ? "#c53030" : "#2f855a";
+        }
+    });
+});
+</script>
+{% endblock %}

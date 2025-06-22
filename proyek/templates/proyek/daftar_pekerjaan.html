@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block title %}Pekerjaan - {{ proyek.name }}{% endblock %}
+
+{% block content %}
+<style>
+    .btn-kembali {
+        display: inline-block;
+        margin-bottom: 20px;
+        padding: 8px 16px;
+        background-color: #1a2b44;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+
+    .btn-kembali:hover {
+        background-color: #2d416d;
+    }
+
+    h2 {
+        color: #1a2b44;
+        margin-bottom: 20px;
+        font-size: 22px;
+    }
+
+    .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+        margin-bottom: 30px;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .search-form {
+        flex: 1;
+        display: flex;
+        width: 100%;
+    }
+
+    .search-form input[type="text"] {
+        flex: 1;
+        padding: 10px 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #f1f8ff;
+        font-size: 14px;
+        height: 46px;
+        box-sizing: border-box;
+        width: 100%;
+        line-height: 1.4;
+    }
+
+    .add-btn {
+        background-color: #1a2b44;
+        color: white;
+        padding: 0 25px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        white-space: nowrap;
+        min-width: 120px;
+    }
+
+    .add-btn:hover {
+        background-color: #3e5c7f;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    table {
+        width: 100%;
+        min-width: 1000px;
+        border-collapse: collapse;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+        font-size: 14px;
+        box-shadow: 0 0 8px rgba(0,0,0,0.03);
+    }
+
+    th, td {
+        border: 1px solid #e0eaf1;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    th {
+        background-color: #1a2b44;
+        color: white;
+        text-align: center;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f7fbff;
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
+        min-width: 120px;
+    }
+
+    .action-btn {
+        display: block;
+        text-align: center;
+        font-weight: bold;
+        font-size: 12px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 2px solid;
+        width: 100%;
+        box-sizing: border-box;
+        background-color: transparent;
+    }
+
+    .edit-btn { color: #4caf50; border-color: #4caf50; }
+    .edit-btn:hover { background-color: #4caf50; color: white; }
+
+    .delete-btn { color: #f44336; border-color: #f44336; }
+    .delete-btn:hover { background-color: #f44336; color: white; }
+
+    .aktivitas-btn { color: #2196f3; border-color: #2196f3; }
+    .aktivitas-btn:hover { background-color: #2196f3; color: white; }
+
+    th:last-child, td:last-child {
+        width: 140px;
+        min-width: 140px;
+    }
+
+    @media (max-width: 768px) {
+        .add-btn {
+            width: 100%;
+        }
+
+        .search-form input[type="text"] {
+            width: 100%;
+        }
+
+        .search-form {
+            margin-bottom: 10px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 6px;
+        }
+    }
+</style>
+
+<a href="{% url 'homepage' %}" class="btn-kembali">Kembali ke Daftar Proyek</a>
+
+<h2>Proyek - {{ proyek.name }}</h2>
+
+<div class="header-bar">
+    <form method="get" class="search-form" onsubmit="return false;">
+        <input type="text" id="searchInput" placeholder="Cari pekerjaan...">
+    </form>
+    <button class="add-btn" onclick="window.location.href='{% url 'tambah_pekerjaan' proyek.id %}'">Tambah Pekerjaan</button>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Nama Pekerjaan</th>
+                <th>Deskripsi</th>
+                <th>Lokasi</th>
+                <th>Tanggal Mulai</th>
+                <th>Tanggal Selesai</th>
+                <th>Pelaksana</th>
+                <th>Supervisor</th>
+                <th>Dibuat</th>
+                <th>Terakhir Diubah</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="pekerjaanTable">
+            {% for pekerjaan in daftar_pekerjaan %}
+            <tr data-name="{{ pekerjaan.nama|lower }}">
+                <td>{{ pekerjaan.nama }}</td>
+                <td>{{ pekerjaan.deskripsi }}</td>
+                <td>{{ pekerjaan.lokasi }}</td>
+                <td>{{ pekerjaan.tanggal_mulai }}</td>
+                <td>{{ pekerjaan.tanggal_selesai }}</td>
+                <td>
+                    {% if pekerjaan.pelaksana %}
+                        {{ pekerjaan.pelaksana }}
+                    {% else %}
+                        <em>Tidak ada pelaksana</em>
+                    {% endif %}
+                </td>
+                <td>{{ pekerjaan.supervisor }}</td>
+                <td>{{ pekerjaan.created_at|date:"d M Y H:i" }}</td>     
+                <td>{{ pekerjaan.updated_at|date:"d M Y H:i" }}</td>    
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'edit_pekerjaan' pekerjaan.id %}" class="action-btn edit-btn">Ubah</a>
+                        <a href="{% url 'hapus_pekerjaan' pekerjaan.id %}" class="action-btn delete-btn" onclick="return confirm('Yakin ingin menghapus pekerjaan ini?')">Hapus</a>
+                        <a href="{% url 'detail_pekerjaan' pekerjaan.id %}" class="action-btn aktivitas-btn">Aktivitas</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10" style="text-align:center;">Belum ada pekerjaan.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.getElementById("searchInput").addEventListener("input", function () {
+        const keyword = this.value.toLowerCase();
+        const rows = document.querySelectorAll("#pekerjaanTable tr");
+        rows.forEach(row => {
+            const name = row.getAttribute("data-name");
+            row.style.display = name.includes(keyword) ? "" : "none";
+        });
+    });
+</script>
+{% endblock %}
