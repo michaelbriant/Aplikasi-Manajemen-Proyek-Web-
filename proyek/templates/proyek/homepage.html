@@ -238,10 +238,21 @@
                     <td>
                         <div class="action-group-wrapper">
                             <div class="action-group">
-                                <a href="{% url 'edit_proyek' proyek.id %}" class="action-btn edit-btn">Ubah</a>
-                                <a href="{% url 'hapus_proyek' proyek.id %}" class="action-btn delete-btn" onclick="return confirm('Yakin ingin menghapus proyek ini?')">Hapus</a>
-                                <a href="{% url 'print_proyek' proyek.id %}" target="_blank" class="action-btn print-btn">Cetak</a>
-                                <a href="{% url 'daftar_pekerjaan' proyek.id %}" class="action-btn lihat-btn">Pekerjaan</a>
+                                {% if proyek.status == 'Selesai' %}
+                                    <!-- Proyek ditutup -->
+                                    <a href="#" onclick="alert('Proyek sudah ditutup dan tidak bisa diubah.')" class="action-btn edit-btn">Ubah</a>
+                                    <a href="{% url 'hapus_proyek' proyek.id %}" class="action-btn delete-btn"
+                                    onclick="return confirm('Yakin ingin menghapus proyek ini?')">Hapus</a>
+                                    <a href="{% url 'print_proyek' proyek.id %}" target="_blank" class="action-btn print-btn">Cetak</a>
+                                    <a href="{% url 'daftar_pekerjaan' proyek.id %}" class="action-btn lihat-btn">Pekerjaan</a>
+                                {% else %}
+                                    <!-- Proyek masih aktif -->
+                                    <a href="{% url 'edit_proyek' proyek.id %}" class="action-btn edit-btn">Ubah</a>
+                                    <a href="{% url 'hapus_proyek' proyek.id %}" class="action-btn delete-btn"
+                                    onclick="return confirm('Yakin ingin menghapus proyek ini?')">Hapus</a>
+                                    <a href="{% url 'print_proyek' proyek.id %}" target="_blank" class="action-btn print-btn">Cetak</a>
+                                    <a href="{% url 'daftar_pekerjaan' proyek.id %}" class="action-btn lihat-btn">Pekerjaan</a>
+                                {% endif %}
                             </div>
                             <div class="tutup-proyek-container">
                                 {% if proyek.status != 'Selesai' %}

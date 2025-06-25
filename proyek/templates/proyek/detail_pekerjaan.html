@@ -193,7 +193,9 @@
     <form method="get" class="search-form" onsubmit="return false;">
         <input type="text" id="searchInput" placeholder="Cari aktivitas...">
     </form>
-    <button class="add-btn" onclick="window.location.href='{% url 'tambah_aktivitas' pekerjaan.id %}'">Tambah Aktivitas</button>
+    {% if pekerjaan.project.status != 'Selesai' %}
+        <button class="add-btn" onclick="window.location.href='{% url 'tambah_aktivitas' pekerjaan.id %}'">Tambah Aktivitas</button>
+    {% endif %}
 </div>
 
 <div class="table-wrapper">
@@ -225,8 +227,13 @@
                 <td>
                     <div class="action-group-wrapper">
                         <div class="action-group">
-                            <a href="{% url 'edit_aktivitas' aktivitas.id %}" class="action-btn edit-btn">Ubah</a>
-                            <a href="{% url 'hapus_aktivitas' aktivitas.id %}" class="action-btn hapus-btn" onclick="return confirm('Yakin ingin menghapus aktivitas ini?');">Hapus</a>
+                            {% if pekerjaan.project.status == 'Selesai' %}
+                                <a href="#" onclick="alert('Tidak bisa ubah karena proyek sudah ditutup.')" class="action-btn edit-btn">Ubah</a>
+                                <a href="#" onclick="alert('Tidak bisa hapus karena proyek sudah ditutup.')" class="action-btn hapus-btn">Hapus</a>
+                            {% else %}
+                                <a href="{% url 'edit_aktivitas' aktivitas.id %}" class="action-btn edit-btn">Ubah</a>
+                                <a href="{% url 'hapus_aktivitas' aktivitas.id %}" class="action-btn hapus-btn" onclick="return confirm('Yakin ingin menghapus aktivitas ini?');">Hapus</a>
+                            {% endif %}
                         </div>
                     </div>
                 </td>

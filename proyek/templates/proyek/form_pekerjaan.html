@@ -4,7 +4,7 @@
 
 <style>
     .project-popup {
-        background-color: #2d2a2a; /* atau tetap seperti sebelumnya */
+        background-color: #2d2a2a;
         font-family: Arial, sans-serif;
     }
 
@@ -320,7 +320,7 @@
 
     function updateHiddenField() {
         const hiddenInput = document.getElementById("pelaksana-hidden");
-        hiddenInput.value = Array.from(selectedPelaksana.keys()).join(",");  // Akan jadi "" jika kosong
+        hiddenInput.value = Array.from(selectedPelaksana.keys()).join(",");
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -339,7 +339,7 @@
 });
 
     function handleAdd() {
-        updateHiddenField();  // ini yang penting untuk menyimpan data, meski kosong
+        updateHiddenField();
         closeModal();
     }
 

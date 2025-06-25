@@ -17,7 +17,9 @@
         .sidebar {
             width: 260px;
             height: 100vh;
-            background-color: #cde3f6;
+            background: linear-gradient(to bottom, rgba(245, 251, 255, 0.95) 0%, rgba(200, 225, 255, 0.95) 50%, rgba(150, 205, 255, 0.95) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             padding: 20px;
             box-sizing: border-box;
             position: fixed;
@@ -28,6 +30,8 @@
             flex-direction: column;
             justify-content: start;
             transition: left 0.3s ease-in-out;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.08);
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .sidebar.open {
@@ -244,15 +248,15 @@
             align-items: center;
             gap: 15px;
             flex-wrap: nowrap;
-            overflow-x: auto;        /* biarkan bisa scroll horizontal kalau terlalu panjang */
+            overflow-x: auto;        
         }
 
         .header-left h1 {
             white-space: nowrap;
-            overflow: visible;       /* jangan potong */
+            overflow: visible;       
             text-overflow: unset;
-            max-width: none;         /* jangan dibatasi lebar */
-            flex-shrink: 0;          /* jangan mengecilkan h1 */
+            max-width: none;         
+            flex-shrink: 0;          
         }
 
         .header {

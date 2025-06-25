@@ -172,7 +172,9 @@
     <form method="get" class="search-form" onsubmit="return false;">
         <input type="text" id="searchInput" placeholder="Cari pekerjaan...">
     </form>
-    <button class="add-btn" onclick="window.location.href='{% url 'tambah_pekerjaan' proyek.id %}'">Tambah Pekerjaan</button>
+    {% if proyek.status != 'Selesai' %}
+        <button class="add-btn" onclick="window.location.href='{% url 'tambah_pekerjaan' proyek.id %}'">Tambah Pekerjaan</button>
+    {% endif %}
 </div>
 
 <div class="table-wrapper">
@@ -211,9 +213,15 @@
                 <td>{{ pekerjaan.updated_at|date:"d M Y H:i" }}</td>    
                 <td>
                     <div class="action-buttons">
-                        <a href="{% url 'edit_pekerjaan' pekerjaan.id %}" class="action-btn edit-btn">Ubah</a>
-                        <a href="{% url 'hapus_pekerjaan' pekerjaan.id %}" class="action-btn delete-btn" onclick="return confirm('Yakin ingin menghapus pekerjaan ini?')">Hapus</a>
-                        <a href="{% url 'detail_pekerjaan' pekerjaan.id %}" class="action-btn aktivitas-btn">Aktivitas</a>
+                        {% if proyek.status == 'Selesai' %}
+                            <a href="#" onclick="alert('Tidak bisa ubah karena proyek sudah ditutup.')" class="action-btn edit-btn">Ubah</a>
+                            <a href="#" onclick="alert('Tidak bisa hapus karena proyek sudah ditutup.')" class="action-btn delete-btn">Hapus</a>
+                            <a href="{% url 'detail_pekerjaan' pekerjaan.id %}" class="action-btn aktivitas-btn">Aktivitas</a>
+                        {% else %}
+                            <a href="{% url 'edit_pekerjaan' pekerjaan.id %}" class="action-btn edit-btn">Ubah</a>
+                            <a href="{% url 'hapus_pekerjaan' pekerjaan.id %}" class="action-btn delete-btn" onclick="return confirm('Yakin ingin menghapus pekerjaan ini?')">Hapus</a>
+                            <a href="{% url 'detail_pekerjaan' pekerjaan.id %}" class="action-btn aktivitas-btn">Aktivitas</a>
+                        {% endif %}
                     </div>
                 </td>
             </tr>

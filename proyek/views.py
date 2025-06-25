@@ -31,7 +31,7 @@ from .models import Project
 from .models import Project, IntegrasiPesan
 from django.views.decorators.csrf import csrf_exempt
 import requests
-from .forms import CustomSetPasswordForm  # pastikan ini ditambahkan
+from .forms import CustomSetPasswordForm 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Project
@@ -85,7 +85,7 @@ def reset_password_email_view(request):
 
 def set_new_password_view(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    form = CustomSetPasswordForm(user, request.POST or None)  # ← ganti di sini
+    form = CustomSetPasswordForm(user, request.POST or None) 
 
     if request.method == 'POST':
         print("📥 POST diterima")
@@ -150,6 +150,10 @@ def edit_proyek(request, pk):
     proyek = get_object_or_404(Project, pk=pk)
     anggota_list = TeamMember.objects.all()
 
+    if proyek.status == 'Selesai':
+        messages.error(request, "Proyek sudah ditutup dan tidak bisa diubah.")
+        return redirect('homepage')
+
     if request.method == 'POST':
         form = ProjectForm(request.POST, instance=proyek)
         if form.is_valid():
@@ -210,22 +214,28 @@ def daftar_pekerjaan(request, proyek_id):
 
 def tambah_pekerjaan(request, proyek_id):
     proyek = get_object_or_404(Project, id=proyek_id)
-    anggota_list = TeamMember.objects.all()  # ⬅️ penting untuk modal JS
+    anggota_list = TeamMember.objects.all()  
+
+    if proyek.status == 'Selesai':
+        messages.error(request, "Proyek sudah ditutup. Tidak bisa menambah pekerjaan.")
+        return render(request, 'proyek/form_pekerjaan.html', {
+            'form': PekerjaanForm(),
+            'proyek': proyek,
+            'anggota_list': TeamMember.objects.all()
+        })
 
     if request.method == 'POST':
         form = PekerjaanForm(request.POST)
         if form.is_valid():
             pekerjaan = form.save(commit=False)
             pekerjaan.project = proyek
-
-            # Ambil data pelaksana dari input tersembunyi (array ID)
             pelaksana_ids = request.POST.get("pelaksana", "")
             if pelaksana_ids:
                 pelaksana_nama = [
                     TeamMember.objects.get(id=int(pid)).name
                     for pid in pelaksana_ids.split(",") if pid.strip().isdigit()
                 ]
-                pekerjaan.pelaksana = ", ".join(pelaksana_nama)  # disimpan sebagai string teks
+                pekerjaan.pelaksana = ", ".join(pelaksana_nama)  
 
             pekerjaan.save()
             return redirect('daftar_pekerjaan', proyek_id=proyek.id)
@@ -235,13 +245,17 @@ def tambah_pekerjaan(request, proyek_id):
     return render(request, 'proyek/form_pekerjaan.html', {
         'form': form,
         'proyek': proyek,
-        'anggota_list': anggota_list  # ⬅️ dikirim ke template
+        'anggota_list': anggota_list
     })
 
 def edit_pekerjaan(request, pk):
     pekerjaan = get_object_or_404(Pekerjaan, pk=pk)
     proyek = pekerjaan.project
     anggota_list = TeamMember.objects.all()
+
+    if pekerjaan.project.status == 'Selesai':
+        messages.error(request, "Tidak bisa mengubah pekerjaan karena proyek sudah ditutup.")
+        return redirect('daftar_pekerjaan', proyek_id=proyek.id)
 
     if request.method == 'POST':
         form = PekerjaanForm(request.POST, instance=pekerjaan)
@@ -262,7 +276,7 @@ def edit_pekerjaan(request, pk):
             pekerjaan.save()
             return redirect('daftar_pekerjaan', proyek_id=proyek.id)
         else:
-            print("❌ Form error:", form.errors)  # 🔍 Tambahkan ini
+            print("❌ Form error:", form.errors) 
     else:
         form = PekerjaanForm(instance=pekerjaan)
 
@@ -275,18 +289,31 @@ def edit_pekerjaan(request, pk):
 
 def hapus_pekerjaan(request, pk):
     pekerjaan = get_object_or_404(Pekerjaan, pk=pk)
-    proyek_id = pekerjaan.project.id
+    proyek = pekerjaan.project
+
+    if proyek.status == 'Selesai':
+        messages.error(request, "Tidak bisa menghapus pekerjaan karena proyek sudah ditutup.")
+        return redirect('daftar_pekerjaan', proyek_id=proyek.id)
+
     pekerjaan.delete()
-    return redirect('daftar_pekerjaan', proyek_id=proyek_id)
+    return redirect('daftar_pekerjaan', proyek_id=proyek.id)
 
 def detail_pekerjaan(request, pekerjaan_id):
     pekerjaan = get_object_or_404(Pekerjaan, id=pekerjaan_id)
-    aktivitas = pekerjaan.aktivitas.all()
+    aktivitas = pekerjaan.aktivitas.all()    
     return render(request, 'proyek/detail_pekerjaan.html', {'pekerjaan': pekerjaan, 'aktivitas': aktivitas})
 
 def tambah_aktivitas(request, pekerjaan_id):
     pekerjaan = get_object_or_404(Pekerjaan, id=pekerjaan_id)
     anggota_list = TeamMember.objects.all()
+
+    if pekerjaan.project.status == 'Selesai':
+        messages.error(request, "Proyek sudah ditutup. Tidak bisa menambah aktivitas.")
+        return render(request, 'proyek/form_aktivitas.html', {
+            'form': AktivitasForm(),
+            'pekerjaan': pekerjaan,
+            'anggota_list': TeamMember.objects.all()
+        })
 
     if request.method == 'POST':
         form = AktivitasForm(request.POST)
@@ -300,7 +327,7 @@ def tambah_aktivitas(request, pekerjaan_id):
                     TeamMember.objects.get(id=int(pid)).name
                     for pid in pelaksana_ids.split(",") if pid.strip().isdigit()
                 ]
-                aktivitas.pelaksana = ", ".join(pelaksana_nama)  # simpan jadi string nama
+                aktivitas.pelaksana = ", ".join(pelaksana_nama)
             else:
                 aktivitas.pelaksana = ""
 
@@ -312,13 +339,17 @@ def tambah_aktivitas(request, pekerjaan_id):
     return render(request, 'proyek/form_aktivitas.html', {
         'form': form,
         'pekerjaan': pekerjaan,
-        'anggota_list': anggota_list  # ⬅️ ini penting untuk dropdown/modal
+        'anggota_list': anggota_list
     })
 
 def edit_aktivitas(request, aktivitas_id):
     aktivitas = get_object_or_404(Aktivitas, id=aktivitas_id)
     pekerjaan = aktivitas.pekerjaan
     anggota_list = TeamMember.objects.all()
+
+    if aktivitas.pekerjaan.project.status == 'Selesai':
+        messages.error(request, "Tidak bisa mengubah aktivitas karena proyek sudah ditutup.")
+        return redirect('detail_pekerjaan', pekerjaan_id=pekerjaan.id)
 
     if request.method == 'POST':
         form = AktivitasForm(request.POST, instance=aktivitas)
@@ -345,12 +376,18 @@ def edit_aktivitas(request, aktivitas_id):
         'form': form,
         'pekerjaan': pekerjaan,
         'anggota_list': anggota_list,
-        'aktivitas': aktivitas,  # ⬅️ untuk membantu inisialisasi pelaksana saat edit
+        'aktivitas': aktivitas, 
     })
 
 def hapus_aktivitas(request, aktivitas_id):
     aktivitas = get_object_or_404(Aktivitas, id=aktivitas_id)
+    proyek = aktivitas.pekerjaan.project
     pekerjaan_id = aktivitas.pekerjaan.id
+
+    if proyek.status == 'Selesai':
+        messages.error(request, "Tidak bisa menghapus aktivitas karena proyek sudah ditutup.")
+        return redirect('detail_pekerjaan', pekerjaan_id=pekerjaan_id)
+
     aktivitas.delete()
     return redirect('detail_pekerjaan', pekerjaan_id=pekerjaan_id)
 
@@ -408,7 +445,7 @@ def edit_anggota(request, pk):
 
     return render(request, 'proyek/profil_anggota.html', {
         'form': form,
-        'anggota': anggota  # Penting agar foto lama bisa ditampilkan
+        'anggota': anggota 
     })
 
 def hapus_anggota(request, pk):
