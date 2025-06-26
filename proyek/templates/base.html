@@ -10,7 +10,7 @@
             margin: 0;
             font-family: 'Segoe UI', sans-serif;
             background-color: #ffffff;
-            overflow-x: hidden;
+            overflow-x: hidden; /* Pastikan tidak ada scroll horizontal di body secara keseluruhan */
         }
 
         /* Sidebar Styles */
@@ -81,8 +81,6 @@
             background-color: #c0392b;
         }
 
-
-
         /* Overlay untuk mobile */
         .sidebar-overlay {
             position: fixed;
@@ -113,14 +111,21 @@
             align-items: center;
             height: 60px;
             box-sizing: border-box;
-            position: static;
+            position: static; /* Biarkan statis atau fixed/sticky jika ingin header selalu terlihat saat scroll vertikal */
             z-index: 999;
+            /* overflow-x: auto; /* HAPUS INI - ini penyebab scroll horizontal pada header */
         }
 
         .header-left {
             display: flex;
             align-items: center;
             gap: 15px;
+            flex-wrap: nowrap; /* Pastikan item tetap dalam satu baris */
+            /* overflow-x: auto; /* HAPUS INI - ini penyebab scroll horizontal pada header-left */
+            /* Tambahkan flex-grow agar bisa mengambil ruang yang tersedia, memungkinkan h1 menyusut */
+            flex-grow: 1;
+            /* Tambahkan overflow hidden agar konten yang melebihi batas tidak terlihat dan text-overflow bekerja */
+            overflow: hidden;
         }
 
         .hamburger-btn {
@@ -130,6 +135,7 @@
             padding: 8px;
             border-radius: 5px;
             transition: background-color 0.3s ease;
+            flex-shrink: 0; /* Pastikan tombol hamburger tidak menyusut */
         }
 
         .hamburger-btn:hover {
@@ -160,12 +166,23 @@
             font-size: 18px;
             font-weight: 600;
             margin: 0;
+            white-space: nowrap; /* Pastikan teks tetap dalam satu baris */
+            overflow: hidden; /* Sembunyikan teks yang melebihi batas */
+            text-overflow: ellipsis; /* Tampilkan elipsis (...) jika teks terpotong */
+            /* Tidak perlu max-width yang hardcode jika flex-grow dan overflow sudah diterapkan pada parent */
+            /* Namun jika ingin lebih spesifik, bisa dihitung:
+            (lebar header - (lebar hamburger + gap + lebar header-right))
+            atau gunakan flex-basis: 0; flex-grow: 1; untuk h1 itu sendiri
+            */
+            flex-shrink: 1; /* Izinkan menyusut jika ruang tidak cukup */
+            min-width: 0; /* Penting untuk flex item yang memiliki overflow: hidden */
         }
 
         .header-right {
             display: flex;
             align-items: center;
             gap: 15px;
+            flex-shrink: 0; /* Pastikan header-right tidak menyusut */
         }
 
         .user-info {
@@ -243,26 +260,6 @@
             background-color: #3e5c7f;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: nowrap;
-            overflow-x: auto;        
-        }
-
-        .header-left h1 {
-            white-space: nowrap;
-            overflow: visible;       
-            text-overflow: unset;
-            max-width: none;         
-            flex-shrink: 0;          
-        }
-
-        .header {
-            overflow-x: auto;
-        }
-
         /* Media query untuk mobile */
         @media (max-width: 767px) {
             .header {
@@ -272,6 +269,8 @@
 
             .header-left h1 {
                 font-size: 16px;
+                /* Sesuaikan max-width jika perlu di mobile */
+                /* max-width: calc(100% - 70px); /* Contoh: sedikit lebih kecil untuk mobile */
             }
 
             .user-info {

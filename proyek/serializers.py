@@ -1,11 +1,12 @@
 from rest_framework import serializers
 from .models import Project, ProjectMember, Pekerjaan, Aktivitas
 
-
+# ===== Serializer untuk model Aktivitas =====
 class AktivitasSerializer(serializers.ModelSerializer):
-    nama_aktivitas = serializers.CharField(source='nama')
-    waktu_pelaksanaan = serializers.DateField()
-    pelaksana_aktivitas = serializers.CharField(source='pelaksana')
+    # Ubah nama field agar lebih informatif saat dikirim ke API client
+    nama_aktivitas = serializers.CharField(source='nama')  # Ambil field 'nama' dari model
+    waktu_pelaksanaan = serializers.DateField()  # Langsung sesuai field asli
+    pelaksana_aktivitas = serializers.CharField(source='pelaksana')  # Ambil field 'pelaksana'
 
     class Meta:
         model = Aktivitas
@@ -16,6 +17,7 @@ class AktivitasSerializer(serializers.ModelSerializer):
         ]
 
 
+# ===== Serializer untuk model Pekerjaan =====
 class PekerjaanSerializer(serializers.ModelSerializer):
     nama_pekerjaan = serializers.CharField(source='nama')
     deskripsi_pekerjaan = serializers.CharField(source='deskripsi')
@@ -24,6 +26,8 @@ class PekerjaanSerializer(serializers.ModelSerializer):
     tanggal_selesai = serializers.DateField()
     pelaksana_pekerjaan = serializers.CharField(source='pelaksana')
     supervisor_pekerjaan = serializers.CharField(source='supervisor')
+
+    # Nested serializer → ambil semua aktivitas dalam pekerjaan ini
     aktivitas = AktivitasSerializer(many=True, read_only=True)
 
     class Meta:
@@ -36,13 +40,14 @@ class PekerjaanSerializer(serializers.ModelSerializer):
             'tanggal_selesai',
             'pelaksana_pekerjaan',
             'supervisor_pekerjaan',
-            'aktivitas'
+            'aktivitas'  # daftar aktivitas dari pekerjaan ini
         ]
 
 
+# ===== Serializer untuk anggota tim dalam proyek (melalui ProjectMember) =====
 class ProjectMemberSerializer(serializers.ModelSerializer):
-    nama = serializers.CharField(source='member.name')
-    jabatan = serializers.CharField(source='role')
+    nama = serializers.CharField(source='member.name')  # Ambil nama dari relasi member
+    jabatan = serializers.CharField(source='role')  # Ambil jabatan dari field role
 
     class Meta:
         model = ProjectMember
@@ -52,6 +57,7 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
         ]
 
 
+# ===== Serializer utama untuk Project (tampilkan semua info termasuk nested) =====
 class ProjectSerializer(serializers.ModelSerializer):
     nama_proyek = serializers.CharField(source='name')
     deskripsi_proyek = serializers.CharField(source='description')
@@ -59,7 +65,11 @@ class ProjectSerializer(serializers.ModelSerializer):
     tanggal_mulai = serializers.DateField(source='start_date')
     tanggal_selesai = serializers.DateField(source='end_date')
     supervisor_proyek = serializers.CharField(source='supervisor')
+
+    # Ambil semua pelaksana proyek (melalui relasi projectmember_set)
     pelaksana_proyek = ProjectMemberSerializer(source='projectmember_set', many=True)
+
+    # Ambil pekerjaan-pekerjaan dalam proyek (beserta aktivitas di dalamnya)
     pekerjaan = PekerjaanSerializer(many=True, read_only=True)
 
     class Meta:
@@ -78,7 +88,8 @@ class ProjectSerializer(serializers.ModelSerializer):
         ]
 
 
+# ===== Serializer versi ringkas untuk hanya menampilkan status proyek =====
 class ProjectStatusOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ['id', 'name', 'supervisor', 'status']
+        fields = ['id', 'name', 'supervisor', 'status']  # Versi minimal untuk status monitoring

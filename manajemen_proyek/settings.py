@@ -13,36 +13,42 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# BASE_DIR mengarah ke direktori root proyek Django.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# Pengaturan awal untuk pengembangan
+# !!! PENTING: Jangan gunakan kunci ini di produksi!
 SECRET_KEY = 'django-insecure-ln=dz(d)tgb5*1j=yyippb!y^b+w1+qd=e3!xm&ftr5dr0g_9#'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# Debug aktif hanya untuk pengembangan (False = mode produksi)
 DEBUG = False
 
-ALLOWED_HOSTS = ['michaelbriant.pythonanywhere.com']
+# Host yang diizinkan mengakses aplikasi ini
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'michaelbriant.pythonanywhere.com']
 
-
-# Application definition
-
+# -----------------------------
+# Aplikasi yang terdaftar
+# -----------------------------
 INSTALLED_APPS = [
+    # Aplikasi bawaan Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Aplikasi kustom
     'proyek',
-    'widget_tweaks',
-    'rest_framework',
+
+    # Aplikasi eksternal
+    'widget_tweaks',       # Untuk kustomisasi form di template
+    'rest_framework',      # Django REST framework untuk API
 ]
 
+# -----------------------------
+# Middleware yang aktif
+# -----------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -53,15 +59,21 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# URL konfigurasi utama
 ROOT_URLCONF = 'manajemen_proyek.urls'
 
+# -----------------------------
+# Konfigurasi template
+# -----------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        # Direktori khusus tempat menyimpan template HTML
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                # Processor untuk berbagai kebutuhan kontekstual
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -71,74 +83,77 @@ TEMPLATES = [
     },
 ]
 
+# Aplikasi WSGI (untuk server berbasis WSGI seperti gunicorn)
 WSGI_APPLICATION = 'manajemen_proyek.wsgi.application'
 
-
+# -----------------------------
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# -----------------------------
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.sqlite3',  # Gunakan SQLite (bawaan)
+        'NAME': BASE_DIR / 'db.sqlite3',         # Lokasi file database
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
+# -----------------------------
+# Validasi Password
+# -----------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',  # Panjang minimum
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',  # Cek password umum
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', # Hindari angka saja
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
+# -----------------------------
+# Bahasa dan Zona Waktu
+# -----------------------------
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
+USE_I18N = True    # Aktifkan terjemahan
+USE_TZ = True      # Gunakan timezone-aware datetime
 
-USE_I18N = True
-
-USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = [
+# -----------------------------
+# File statis (CSS, JS, Gambar)
+# -----------------------------
+STATIC_URL = 'static/'                                # URL prefix
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')        # Lokasi collectstatic
+STATICFILES_DIRS = [                                  # Lokasi tambahan file statis (manual)
     os.path.join(BASE_DIR, 'proyek/static'),
 ]
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+# -----------------------------
+# File media (upload pengguna)
+# -----------------------------
+MEDIA_URL = '/media/'                                 # URL prefix untuk media
+MEDIA_ROOT = BASE_DIR / 'media'                       # Lokasi penyimpanan media
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# -----------------------------
+# Login dan Redirect
+# -----------------------------
+LOGIN_URL = '/login/'                                 # URL login jika belum login
+LOGIN_REDIRECT_URL = '/homepage/'                     # Arah setelah berhasil login
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/homepage/'
-
+# -----------------------------
+# Django REST Framework
+# -----------------------------
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.JSONRenderer',          # Output API sebagai JSON
+        'rest_framework.renderers.BrowsableAPIRenderer',  # Antarmuka API browser
     ]
 }
+
+# -----------------------------
+# Tipe field default untuk primary key
+# -----------------------------
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

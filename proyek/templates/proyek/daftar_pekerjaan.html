@@ -2,7 +2,9 @@
 {% block title %}Pekerjaan - {{ proyek.name }}{% endblock %}
 
 {% block content %}
+<!-- ====== Gaya CSS untuk halaman daftar pekerjaan ====== -->
 <style>
+    /* Tombol kembali ke daftar proyek */
     .btn-kembali {
         display: inline-block;
         margin-bottom: 20px;
@@ -14,16 +16,19 @@
         font-weight: bold;
     }
 
+    /* Warna latar saat hover tombol kembali */
     .btn-kembali:hover {
         background-color: #2d416d;
     }
 
+    /* Judul halaman */
     h2 {
         color: #1a2b44;
         margin-bottom: 20px;
         font-size: 22px;
     }
 
+    /* Bagian atas yang berisi form pencarian dan tombol tambah */
     .header-bar {
         display: flex;
         justify-content: space-between;
@@ -33,12 +38,14 @@
         flex-wrap: wrap;
     }
 
+    /* Form pencarian */
     .search-form {
         flex: 1;
         display: flex;
         width: 100%;
     }
 
+    /* Input dalam form pencarian */
     .search-form input[type="text"] {
         flex: 1;
         padding: 10px 15px;
@@ -52,6 +59,7 @@
         line-height: 1.4;
     }
 
+    /* Tombol "Tambah Pekerjaan" */
     .add-btn {
         background-color: #1a2b44;
         color: white;
@@ -69,15 +77,18 @@
         min-width: 120px;
     }
 
+    /* Hover pada tombol tambah pekerjaan */
     .add-btn:hover {
         background-color: #3e5c7f;
     }
 
+    /* Pembungkus tabel agar bisa discroll horizontal di layar kecil */
     .table-wrapper {
         overflow-x: auto;
         width: 100%;
     }
 
+    /* Tabel utama */
     table {
         width: 100%;
         min-width: 1000px;
@@ -89,6 +100,7 @@
         box-shadow: 0 0 8px rgba(0,0,0,0.03);
     }
 
+    /* Sel header dan isi tabel */
     th, td {
         border: 1px solid #e0eaf1;
         padding: 10px 12px;
@@ -96,16 +108,19 @@
         vertical-align: middle;
     }
 
+    /* Header kolom tabel */
     th {
         background-color: #1a2b44;
         color: white;
         text-align: center;
     }
 
+    /* Warna baris selang-seling */
     tr:nth-child(even) {
         background-color: #f7fbff;
     }
 
+    /* Tombol aksi per baris pekerjaan */
     .action-buttons {
         display: flex;
         flex-direction: column;
@@ -114,6 +129,7 @@
         min-width: 120px;
     }
 
+    /* Gaya umum semua tombol aksi */
     .action-btn {
         display: block;
         text-align: center;
@@ -130,20 +146,25 @@
         background-color: transparent;
     }
 
+    /* Warna tombol edit */
     .edit-btn { color: #4caf50; border-color: #4caf50; }
     .edit-btn:hover { background-color: #4caf50; color: white; }
 
+    /* Warna tombol hapus */
     .delete-btn { color: #f44336; border-color: #f44336; }
     .delete-btn:hover { background-color: #f44336; color: white; }
 
+    /* Warna tombol aktivitas */
     .aktivitas-btn { color: #2196f3; border-color: #2196f3; }
     .aktivitas-btn:hover { background-color: #2196f3; color: white; }
 
+    /* Lebar kolom aksi */
     th:last-child, td:last-child {
         width: 140px;
         min-width: 140px;
     }
 
+    /* Tampilan mobile */
     @media (max-width: 768px) {
         .add-btn {
             width: 100%;
@@ -164,19 +185,24 @@
     }
 </style>
 
+<!-- Tombol kembali ke daftar proyek -->
 <a href="{% url 'homepage' %}" class="btn-kembali">Kembali ke Daftar Proyek</a>
 
+<!-- Judul proyek -->
 <h2>Proyek - {{ proyek.name }}</h2>
 
+<!-- Form pencarian dan tombol tambah pekerjaan -->
 <div class="header-bar">
     <form method="get" class="search-form" onsubmit="return false;">
         <input type="text" id="searchInput" placeholder="Cari pekerjaan...">
     </form>
     {% if proyek.status != 'Selesai' %}
+        <!-- Tombol tambah hanya muncul jika proyek belum ditutup -->
         <button class="add-btn" onclick="window.location.href='{% url 'tambah_pekerjaan' proyek.id %}'">Tambah Pekerjaan</button>
     {% endif %}
 </div>
 
+<!-- Tabel daftar pekerjaan -->
 <div class="table-wrapper">
     <table>
         <thead>
@@ -195,6 +221,7 @@
         </thead>
         <tbody id="pekerjaanTable">
             {% for pekerjaan in daftar_pekerjaan %}
+            <!-- Baris data pekerjaan -->
             <tr data-name="{{ pekerjaan.nama|lower }}">
                 <td>{{ pekerjaan.nama }}</td>
                 <td>{{ pekerjaan.deskripsi }}</td>
@@ -214,10 +241,12 @@
                 <td>
                     <div class="action-buttons">
                         {% if proyek.status == 'Selesai' %}
+                            <!-- Jika proyek sudah selesai, semua tombol aksi nonaktif -->
                             <a href="#" onclick="alert('Tidak bisa ubah karena proyek sudah ditutup.')" class="action-btn edit-btn">Ubah</a>
                             <a href="#" onclick="alert('Tidak bisa hapus karena proyek sudah ditutup.')" class="action-btn delete-btn">Hapus</a>
                             <a href="{% url 'detail_pekerjaan' pekerjaan.id %}" class="action-btn aktivitas-btn">Aktivitas</a>
                         {% else %}
+                            <!-- Jika proyek belum selesai, tombol aksi aktif -->
                             <a href="{% url 'edit_pekerjaan' pekerjaan.id %}" class="action-btn edit-btn">Ubah</a>
                             <a href="{% url 'hapus_pekerjaan' pekerjaan.id %}" class="action-btn delete-btn" onclick="return confirm('Yakin ingin menghapus pekerjaan ini?')">Hapus</a>
                             <a href="{% url 'detail_pekerjaan' pekerjaan.id %}" class="action-btn aktivitas-btn">Aktivitas</a>
@@ -226,12 +255,14 @@
                 </td>
             </tr>
             {% empty %}
+            <!-- Jika belum ada pekerjaan -->
             <tr><td colspan="10" style="text-align:center;">Belum ada pekerjaan.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
+<!-- Script untuk pencarian nama pekerjaan secara real-time -->
 <script>
     document.getElementById("searchInput").addEventListener("input", function () {
         const keyword = this.value.toLowerCase();
