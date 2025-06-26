@@ -2,8 +2,9 @@
 {% block title %}Form Pekerjaan{% endblock %}
 {% block content %}
 
-<!-- ====== CSS untuk tampilan form tambah/edit pekerjaan ====== -->
 <style>
+    /* ... (CSS Anda yang sudah ada, tidak perlu diubah) ... */
+
     /* Kontainer utama popup form */
     .project-popup {
         background-color: #525252;
@@ -53,7 +54,7 @@
     }
 
     /* Field input umum */
-    input, select, textarea {
+    input, select, textarea { /* Pastikan 'select' ada di sini */
         width: 100%;
         padding: 8px 12px;
         margin-bottom: 12px;
@@ -209,7 +210,6 @@
     }
 </style>
 
-<!-- ====== FORM TAMBAH/UBAH PEKERJAAN ====== -->
 <div class="project-popup">
     <span class="close-btn" onclick="window.history.back()">×</span>
     <h2>{% if pekerjaan %}Ubah Pekerjaan{% else %}Tambah Pekerjaan{% endif %}</h2>
@@ -233,6 +233,11 @@
         <label>Supervisor</label>
         {{ form.supervisor }}
 
+        {# START - TAMBAH FIELD STATUS DI SINI #}
+        <label>Status Pekerjaan</label>
+        {{ form.status }}
+        {# END - TAMBAH FIELD STATUS DI SINI #}
+
         <label>Pelaksana</label>
         <button type="button" class="btn" onclick="openModal()">Pilih Pelaksana</button>
         <input type="hidden" name="pelaksana" id="pelaksana-hidden">
@@ -241,7 +246,6 @@
     </form>
 </div>
 
-<!-- ====== MODAL PILIH PELAKSANA ====== -->
 <div id="pelaksanaModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeModal()">×</span>
@@ -252,7 +256,6 @@
     </div>
 </div>
 
-<!-- ====== SCRIPT INTERAKSI MODAL PILIH PELAKSANA ====== -->
 <script>
     const selectedPelaksana = new Map();
     const allMembers = [

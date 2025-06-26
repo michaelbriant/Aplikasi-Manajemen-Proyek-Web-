@@ -55,7 +55,7 @@ class TeamMemberForm(forms.ModelForm):
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date'}),  # Input tanggal lahir
             'photo': forms.ClearableFileInput(attrs={
-                'class': 'hidden-input', 
+                'class': 'hidden-input',
                 'id': 'fileUpload'
             })  # Upload foto
         }
@@ -67,10 +67,15 @@ class TeamMemberForm(forms.ModelForm):
 class PekerjaanForm(forms.ModelForm):
     class Meta:
         model = Pekerjaan
-        exclude = ['project']  # Field project diisi otomatis dari view
+        # UBAH DARI 'exclude' MENJADI 'fields' DAN TAMBAHKAN 'status'
+        fields = [
+            'nama', 'deskripsi', 'lokasi', 'tanggal_mulai',
+            'tanggal_selesai', 'pelaksana', 'supervisor', 'status' # <-- Tambahkan 'status' di sini
+        ]
         widgets = {
             'tanggal_mulai': forms.DateInput(attrs={'type': 'date'}),
             'tanggal_selesai': forms.DateInput(attrs={'type': 'date'}),
+            'status': forms.Select(), # <-- Tambahkan widget ini untuk dropdown
         }
 
 
@@ -80,9 +85,13 @@ class PekerjaanForm(forms.ModelForm):
 class AktivitasForm(forms.ModelForm):
     class Meta:
         model = Aktivitas
-        exclude = ['pekerjaan']  # Field pekerjaan diisi otomatis dari view
+        # UBAH DARI 'exclude' MENJADI 'fields' DAN TAMBAHKAN 'status'
+        fields = [
+            'nama', 'waktu_pelaksanaan', 'pelaksana', 'status' # <-- Tambahkan 'status' di sini
+        ]
         widgets = {
             'waktu_pelaksanaan': forms.DateInput(attrs={'type': 'date'}),
+            'status': forms.Select(), # <-- Tambahkan widget ini untuk dropdown
         }
 
 

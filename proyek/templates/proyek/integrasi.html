@@ -1,12 +1,113 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 40px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 1px 5px rgba(0,0,0,0.05);">
+<style>
+    /* Custom CSS for the integration page and cards */
+    .integration-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+    }
+
+    .form-group label {
+        font-weight: 500;
+        color: #555;
+    }
+
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        box-sizing: border-box; /* Ensures padding doesn't increase total width */
+    }
+
+    #check-button {
+        background: #4a90e2;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        width: auto; /* Allow button to size naturally */
+    }
+
+    #check-button:hover {
+        background: #367ac8;
+    }
+
+    #check-button:disabled {
+        background: #aabfdd;
+        cursor: not-allowed;
+    }
+
+    #status-result {
+        margin-top: 30px;
+        padding: 15px;
+        border-radius: 6px;
+        background: #f8f9fa;
+        min-height: 20px;
+        border-left: 4px solid #4a90e2;
+        color: #333;
+    }
+
+    #status-result.error {
+        background: #fff5f5;
+        border-left-color: #e53e3e;
+        color: #c53030;
+    }
+
+    #status-result.success {
+        background: #f0fff4;
+        border-left-color: #38a169;
+        color: #2f855a;
+    }
+
+    /* Card Styling */
+    .data-card {
+        background-color: #fefefe; /* Lighter background for cards */
+        border: 1px solid #e0eaf1;
+        border-radius: 8px;
+        padding: 15px 20px;
+        margin-bottom: 20px; /* Space between cards */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .data-card h4 {
+        color: #1a2b44; /* Darker heading for card title */
+        font-size: 18px;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #e0eaf1; /* Separator for title */
+        padding-bottom: 10px;
+    }
+
+    .data-card div strong {
+        color: #333; /* Darker text for labels */
+    }
+
+    .data-card div {
+        margin-bottom: 8px; /* Space between key-value pairs */
+        line-height: 1.5;
+    }
+
+    /* Styling for "Status Proyek" outside of a specific card, for main status */
+    #status-result strong {
+        color: #1a2b44;
+    }
+
+</style>
+
+<div class="integration-container">
     <h2 style="color: #444; font-weight: normal;">Manajemen Proyek - Integrasi Modul</h2>
 
     <div class="form-group" style="margin-bottom: 20px;">
-        <label for="modul-select" style="font-weight: 500; color: #555;">Pilih Modul:</label>
-        <select id="modul-select" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ccc;">
+        <label for="modul-select">Pilih Modul:</label>
+        <select id="modul-select">
             <option value="">-- Pilih --</option>
             <option value="ie">Intelligence Engineering</option>
             <option value="ic">Intelligence Creation</option>
@@ -15,80 +116,214 @@
     </div>
 
     <div class="form-group" style="margin-bottom: 20px;">
-        <label for="project-select" style="font-weight: 500; color: #555;">Pilih Proyek:</label>
-        <select id="project-select" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ccc;">
+        <label for="project-select">Pilih Proyek:</label>
+        <select id="project-select">
             {% for project in projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
             {% endfor %}
         </select>
     </div>
 
-    <button id="check-button" style="background: #4a90e2; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 14px; cursor: pointer;">
-        Periksa Status
+    <button id="check-button">
+        Periksa Status & Detail
     </button>
 
-    <div id="status-result" style="margin-top: 20px; padding: 15px; border-radius: 6px; background: #f8f9fa; min-height: 20px; border-left: 4px solid #4a90e2;"></div>
+    <div id="status-result" class="loading">Memuat data...</div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const checkButton = document.getElementById("check-button");
     const resultDiv = document.getElementById("status-result");
+    const modulSelect = document.getElementById("modul-select");
+    const projectSelect = document.getElementById("project-select");
 
-    checkButton.addEventListener("click", function () {
-        const modul = document.getElementById("modul-select").value;
-        const selectedProjectId = parseInt(document.getElementById("project-select").value);
+    // Mapping API URLs untuk setiap modul
+    const apiEndpoints = {
+        'ie': {
+            'status': "https://fabyaanusakti.pythonanywhere.com/api/status-only/",
+            'detail': "https://fabyaanusakti.pythonanywhere.com/api/projek-data/"
+        },
+        'ic': {
+            'main': "https://arlellll.pythonanywhere.com/api-content/project-statuses/" // Mengandung status & detail
+        },
+        'imp': {
+            'status': "https://tasana.pythonanywhere.com/api/project-status/"
+            // IMP hanya memberikan status, tidak ada detail pekerjaan dari API ini.
+        }
+    };
 
-        if (!modul) {
-            showResult("Pilih modul terlebih dahulu", "error");
+    checkButton.addEventListener("click", async function () {
+        const modul = modulSelect.value;
+        const selectedProjectId = parseInt(projectSelect.value); // Pastikan ini adalah ID numerik
+
+        if (!modul || !selectedProjectId) {
+            showResult("Silakan pilih modul dan proyek terlebih dahulu", "error");
             return;
         }
 
-        checkButton.textContent = "Checking...";
+        checkButton.textContent = "Memeriksa...";
         checkButton.disabled = true;
+        resultDiv.innerHTML = "Memuat data...";
+        resultDiv.className = "loading"; // Reset class
 
-        let apiUrl = "";
-        if (modul === "ie") {
-            apiUrl = "https://fabyaanusakti.pythonanywhere.com/api/status-only/";
-        } else if (modul === "ic") {
-            apiUrl = "https://arlellll.pythonanywhere.com/api-content/project-statuses/";
-        } else if (modul === "imp") {
-            apiUrl = "https://tasana.pythonanywhere.com/api/project-status/";
-        }
+        let html = "";
+        let statusFetched = false;
 
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => {
-                let proyek = null;
+        try {
+            if (modul === 'ie') {
+                const [statusRes, detailRes] = await Promise.all([
+                    fetch(apiEndpoints.ie.status),
+                    fetch(apiEndpoints.ie.detail)
+                ]);
 
-                if (modul === "ie") {
-                    proyek = data.find(p => p.id === selectedProjectId);
-                } else if (modul === "ic" || modul === "imp") {
-                    proyek = data.find(p => parseInt(p.external_id) === selectedProjectId);
+                const statusList = await statusRes.json();
+                const projekList = await detailRes.json();
+
+                const statusProyek = statusList.find(p => p.id === selectedProjectId);
+                const detailProyek = projekList.find(p => p.id_projek === selectedProjectId); // ID di IE adalah id_projek
+
+                html += `<h3>Integrasi Modul Intelligence Engineering (IE)</h3>`;
+                if (statusProyek) {
+                    html += `<div class="data-card"><strong>Status Proyek:</strong> ${statusProyek.status}</div>`;
+                    statusFetched = true;
                 }
 
-                if (proyek) {
-                    showResult(`Status Proyek: <strong>${proyek.status}</strong>`, "success");
+                if (detailProyek) {
+                    // 1. Meaningful Objectives
+                    if (Object.keys(detailProyek.meaningful_objectives || {}).length > 0 && Object.values(detailProyek.meaningful_objectives).some(v => v && v !== "-")) {
+                        html += `<div class="data-card"><h4>🎯 Meaningful Objectives</h4>`;
+                        for (const [key, value] of Object.entries(detailProyek.meaningful_objectives)) {
+                            if (value && value !== "-") {
+                                html += `<div><strong>${formatKey(key)}:</strong> ${value}</div>`;
+                            }
+                        }
+                        html += `</div>`;
+                    }
+
+                    // 2. Intelligence Experience
+                    if (Object.keys(detailProyek.intelligence_experience || {}).length > 0 && Object.values(detailProyek.intelligence_experience).some(v => v && v !== "-")) {
+                        html += `<div class="data-card"><h4>🧠 Intelligence Experience</h4>`;
+                        for (const [key, value] of Object.entries(detailProyek.intelligence_experience)) {
+                            if (value && value !== "-") {
+                                html += `<div><strong>${formatKey(key)}:</strong> ${value}</div>`;
+                            }
+                        }
+                        html += `</div>`;
+                    }
+
+                    // 3. Intelligence Implementation
+                    if (Object.keys(detailProyek.intelligence_implementation || {}).length > 0 && Object.values(detailProyek.intelligence_implementation).some(v => v && v !== "-")) {
+                        html += `<div class="data-card"><h4>🔧 Intelligence Implementation</h4>`;
+                        for (const [key, value] of Object.entries(detailProyek.intelligence_implementation)) {
+                            if (!["last_edited", "last_edited_by"].includes(key) && value && value !== "-") {
+                                html += `<div><strong>${formatKey(key)}:</strong> ${value}</div>`;
+                            }
+                        }
+                        html += `</div>`;
+                    }
+
+                    // 4. Batasan Pengembangan
+                    if (detailProyek.batasan_pengembangan?.limitation && detailProyek.batasan_pengembangan.limitation !== "-") {
+                        html += `<div class="data-card"><h4>⚠️ Batasan Pengembangan</h4>`;
+                        html += `<div><strong>Limitation:</strong> ${detailProyek.batasan_pengembangan.limitation}</div>`;
+                        html += `</div>`;
+                    }
+
+                    // 5. Status Realisasi
+                    if (detailProyek.status_realisasi?.realization && detailProyek.status_realisasi.realization !== "-") {
+                        html += `<div class="data-card"><h4>🚀 Status Realisasi</h4>`;
+                        html += `<div><strong>Realization:</strong> ${detailProyek.status_realisasi.realization}</div>`;
+                        html += `</div>`;
+                    }
+
+                    // 6. Perencanaan
+                    if (Object.keys(detailProyek.perencanaan || {}).length > 0 && Object.values(detailProyek.perencanaan).some(v => v && v !== "-")) {
+                        html += `<div class="data-card"><h4>📅 Perencanaan</h4>`;
+                        for (const [key, value] of Object.entries(detailProyek.perencanaan)) {
+                            if (!["last_edited", "last_edited_by"].includes(key) && value && value !== "-") {
+                                html += `<div><strong>${formatKey(key)}:</strong> ${value}</div>`;
+                            }
+                        }
+                        html += `</div>`;
+                    }
+
+                } else if (!statusProyek) {
+                    html += `<em>Data proyek tidak ditemukan di modul IE.</em>`;
+                }
+
+            } else if (modul === 'ic') {
+                const response = await fetch(apiEndpoints.ic.main);
+                const projectStatuses = await response.json();
+
+                const projectData = projectStatuses.find(p => p.project_id === selectedProjectId); // IC menggunakan project_id
+
+                html += `<h3>Integrasi Modul Intelligence Creation (IC)</h3>`;
+                if (projectData) {
+                    html += `<div class="data-card"><strong>Status Proyek:</strong> ${projectData.status}</div>`;
+                    statusFetched = true;
+
+                    html += `<div class="data-card"><h4>📋 Detail Pekerjaan (dari IC)</h4>`;
+                    if (projectData.project_name) html += `<div><strong>Nama Proyek:</strong> ${projectData.project_name}</div>`;
+                    if (projectData.description) html += `<div><strong>Deskripsi:</strong> ${projectData.description}</div>`;
+                    if (projectData.start_date) html += `<div><strong>Tanggal Mulai:</strong> ${projectData.start_date}</div>`;
+                    if (projectData.end_date) html += `<div><strong>Tanggal Selesai:</strong> ${projectData.end_date}</div>`;
+                    if (projectData.team_members && projectData.team_members.length > 0) {
+                        html += `<div><strong>Anggota Tim:</strong> ${projectData.team_members.map(m => m.name).join(', ')}</div>`;
+                    }
+                    if (projectData.milestones && projectData.milestones.length > 0) {
+                        html += `<h4>Milestones:</h4>`;
+                        projectData.milestones.forEach(milestone => {
+                            html += `<div>&bull; <strong>${milestone.name}</strong> (Due: ${milestone.due_date}, Status: ${milestone.status})</div>`;
+                        });
+                    }
+                    // Tambahkan bidang lain dari IC jika diperlukan sesuai struktur API
+                    html += `</div>`;
                 } else {
-                    showResult("Proyek tidak ditemukan dalam sistem ini", "error");
+                    html += `<em>Data proyek tidak ditemukan di modul IC.</em>`;
                 }
-            })
-            .catch(error => {
-                showResult("❌ Gagal mengambil status", "error");
-                console.error("Error:", error);
-            })
-            .finally(() => {
-                checkButton.textContent = "Periksa Status";
-                checkButton.disabled = false;
-            });
 
-        function showResult(message, type) {
-            resultDiv.innerHTML = message;
-            resultDiv.style.background = type === "error" ? "#fff5f5" : "#f0fff4";
-            resultDiv.style.borderLeftColor = type === "error" ? "#e53e3e" : "#38a169";
-            resultDiv.style.color = type === "error" ? "#c53030" : "#2f855a";
+            } else if (modul === 'imp') {
+                const response = await fetch(apiEndpoints.imp.status);
+                const projectStatuses = await response.json();
+
+                const projectStatus = projectStatuses.find(p => p.project_id === selectedProjectId);
+
+                html += `<h3>Integrasi Modul Implementation (IMP)</h3>`;
+                if (projectStatus) {
+                    html += `<div class="data-card"><strong>Status Proyek:</strong> ${projectStatus.status}</div>`;
+                    statusFetched = true;
+                    html += `<em>Modul Implementation hanya menyediakan status proyek dari API ini. Detail pekerjaan tidak tersedia.</em>`;
+                } else {
+                    html += `<em>Status proyek tidak ditemukan di modul Implementation.</em>`;
+                }
+            }
+
+            if (!statusFetched) {
+                showResult("Data proyek tidak ditemukan di modul ini.", "error");
+            } else {
+                showResult(html, "success");
+            }
+
+        } catch (error) {
+            showResult("❌ Gagal mengambil data. Pastikan API tersedia dan ID proyek benar.", "error");
+            console.error("Error fetching data:", error);
+        } finally {
+            checkButton.textContent = "Periksa Status & Detail";
+            checkButton.disabled = false;
         }
     });
+
+    function showResult(message, type) {
+        resultDiv.innerHTML = message;
+        resultDiv.className = type; // Set class 'error' or 'success'
+        // CSS for .error and .success handles background, border, color
+    }
+
+    function formatKey(key) {
+        // Simple capitalization and underscore replacement
+        return key.replace(/_/g, " ").replace(/\b\w/g, char => char.toUpperCase());
+    }
 });
 </script>
 {% endblock %}

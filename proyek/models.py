@@ -63,6 +63,13 @@ class ProjectMember(models.Model):
 
 # ===== Model Pekerjaan: untuk menyimpan daftar pekerjaan dalam suatu proyek =====
 class Pekerjaan(models.Model):
+    PEKERJAAN_STATUS_CHOICES = [ # Pilihan status pekerjaan
+        ('Perencanaan', 'Perencanaan'),
+        ('Berlangsung', 'Berlangsung'),
+        ('Tertunda', 'Tertunda'),
+        ('Berhenti', 'Berhenti'),
+        ('Selesai', 'Selesai'),
+    ]
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='pekerjaan')  # Proyek tempat pekerjaan ini dilakukan
     nama = models.CharField(max_length=255)  # Nama pekerjaan
     deskripsi = models.TextField()  # Penjelasan tentang pekerjaan
@@ -71,6 +78,7 @@ class Pekerjaan(models.Model):
     tanggal_selesai = models.DateField()  # Tanggal selesai pekerjaan
     pelaksana = models.CharField(max_length=100, blank=True, null=True)  # Pelaksana pekerjaan (bisa lebih dari satu nama)
     supervisor = models.CharField(max_length=100)  # Supervisor yang bertanggung jawab atas pekerjaan
+    status = models.CharField("Status Pekerjaan", max_length=20, choices=PEKERJAAN_STATUS_CHOICES, default='Perencanaan') # Menggunakan pilihan status khusus pekerjaan
     created_at = models.DateTimeField(auto_now_add=True)  # Waktu pembuatan
     updated_at = models.DateTimeField(auto_now=True)  # Waktu terakhir diperbarui
 
@@ -80,10 +88,18 @@ class Pekerjaan(models.Model):
 
 # ===== Model Aktivitas: bagian detail dari pekerjaan, semacam to-do list-nya =====
 class Aktivitas(models.Model):
+    AKTIVITAS_STATUS_CHOICES = [ # Pilihan status aktivitas
+        ('Perencanaan', 'Perencanaan'),
+        ('Berlangsung', 'Berlangsung'),
+        ('Tertunda', 'Tertunda'),
+        ('Berhenti', 'Berhenti'),
+        ('Selesai', 'Selesai'),
+    ]
     pekerjaan = models.ForeignKey(Pekerjaan, on_delete=models.CASCADE, related_name='aktivitas')  # Pekerjaan yang memiliki aktivitas ini
     nama = models.CharField(max_length=255)  # Nama aktivitas
     waktu_pelaksanaan = models.DateField()  # Kapan aktivitas ini dijalankan
     pelaksana = models.CharField(max_length=100, blank=True, null=True)  # Pelaksana aktivitas
+    status = models.CharField("Status Aktivitas", max_length=20, choices=AKTIVITAS_STATUS_CHOICES, default='Perencanaan') # Menggunakan pilihan status khusus aktivitas
     created_at = models.DateTimeField(auto_now_add=True)  # Waktu pembuatan
     updated_at = models.DateTimeField(auto_now=True)  # Waktu update
 
