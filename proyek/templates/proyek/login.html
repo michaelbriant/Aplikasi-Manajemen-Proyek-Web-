@@ -56,11 +56,41 @@
         padding: 14px 16px;
         border: 1px solid #ccc;
         border-radius: 12px;
-        margin-bottom: 12px;
+        margin-bottom: 12px; /* Ini akan di-override untuk input password oleh .password-input-wrapper */
         font-size: 15px;
         background-color: #f8fbff;
         line-height: 1.4;
     }
+
+    /* Styling untuk Password Toggle */
+    .password-input-wrapper {
+        position: relative;
+        width: 100%;
+        margin-bottom: 12px; /* Pindahkan margin-bottom ke wrapper */
+    }
+
+    .password-input-wrapper input {
+        padding-right: 40px; /* Beri ruang untuk tombol toggle */
+        margin-bottom: 0; /* Hapus margin-bottom dari input itu sendiri */
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 15px; /* Sesuaikan posisi horizontal */
+        top: 50%;
+        transform: translateY(-50%); /* Pusatkan vertikal */
+        cursor: pointer;
+        color: #6c757d; /* Warna ikon/teks toggle */
+        font-size: 14px; /* Ukuran font toggle */
+        font-weight: 500;
+        user-select: none; /* Cegah teks terpilih saat diklik */
+        white-space: nowrap; /* Pastikan teks tidak patah baris */
+    }
+
+    .password-toggle:hover {
+        color: #007bff; /* Efek hover */
+    }
+
 
     .login-container .link-row {
         width: 100%;
@@ -197,7 +227,13 @@
         <form method="post" autocomplete="off">
             {% csrf_token %}
             <input type="text" name="username" placeholder="Nama Pengguna" autocomplete="off" required>
-            <input type="password" name="password" placeholder="Kata Sandi" autocomplete="new-password" required>
+            
+            {# Wrapper untuk input kata sandi dan tombol toggle #}
+            <div class="password-input-wrapper">
+                <input type="password" id="passwordInput" name="password" placeholder="Kata Sandi" autocomplete="new-password" required>
+                <span class="password-toggle" id="passwordToggle">Lihat</span>
+            </div>
+
             <div class="link-row">
                 <a href="{% url 'reset_password_email' %}">Lupa Kata Sandi</a>
             </div>
@@ -208,4 +244,24 @@
         </p>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordToggle = document.getElementById('passwordToggle');
+
+        // Pastikan elemen ditemukan sebelum menambahkan event listener
+        if (passwordInput && passwordToggle) {
+            passwordToggle.addEventListener('click', function() {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    passwordToggle.textContent = 'Sembunyikan';
+                } else {
+                    passwordInput.type = 'password';
+                    passwordToggle.textContent = 'Lihat';
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

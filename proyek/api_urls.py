@@ -10,6 +10,6 @@ router = DefaultRouter()
 # Mendaftarkan rute 'proyek' ke dalam router, mengarah ke ProjectViewSet
 # basename='proyek' menentukan nama dasar untuk URL pattern yang dihasilkan
 router.register(r'proyek', ProjectViewSet, basename='proyek')
-
+    
 # Menghasilkan daftar URL dari router untuk digunakan dalam urlpatterns
 urlpatterns = router.urls

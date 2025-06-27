@@ -17,13 +17,15 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Pengaturan awal untuk pengembangan
-# !!! PENTING: Jangan gunakan kunci ini di produksi!
+# !!! PENTING: Jangan gunakan kunci ini di produksi! Ganti dengan nilai aman.
 SECRET_KEY = 'django-insecure-ln=dz(d)tgb5*1j=yyippb!y^b+w1+qd=e3!xm&ftr5dr0g_9#'
 
 # Debug aktif hanya untuk pengembangan (False = mode produksi)
-DEBUG = False
+# Set DEBUG ke False di lingkungan produksi untuk keamanan.
+DEBUG = False # Atau True sementara untuk development lokal, lalu False saat deploy
 
 # Host yang diizinkan mengakses aplikasi ini
+# Pastikan 'michaelbriant.pythonanywhere.com' ada di sini untuk deployment.
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'michaelbriant.pythonanywhere.com']
 
 # -----------------------------
@@ -38,18 +40,22 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Aplikasi kustom
+    # Aplikasi kustom Anda
     'proyek',
 
     # Aplikasi eksternal
     'widget_tweaks',       # Untuk kustomisasi form di template
     'rest_framework',      # Django REST framework untuk API
+    'corsheaders',         # <--- TAMBAHAN: Untuk mengelola Cross-Origin Resource Sharing (CORS)
 ]
 
 # -----------------------------
 # Middleware yang aktif
 # -----------------------------
 MIDDLEWARE = [
+    # CORS middleware harus ditempatkan setinggi mungkin, sebelum middleware lain
+    # yang mungkin membaca respons seperti CommonMiddleware atau GZipMiddleware.
+    'corsheaders.middleware.CorsMiddleware', # <--- TAMBAHAN: Middleware CORS
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -118,40 +124,52 @@ AUTH_PASSWORD_VALIDATORS = [
 # Bahasa dan Zona Waktu
 # -----------------------------
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'UTC' # Sesuaikan dengan zona waktu Jakarta jika perlu, misal 'Asia/Jakarta'
 USE_I18N = True    # Aktifkan terjemahan
 USE_TZ = True      # Gunakan timezone-aware datetime
 
 # -----------------------------
 # File statis (CSS, JS, Gambar)
 # -----------------------------
-STATIC_URL = 'static/'                                # URL prefix
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')        # Lokasi collectstatic
-STATICFILES_DIRS = [                                  # Lokasi tambahan file statis (manual)
+STATIC_URL = 'static/'                          # URL prefix
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # Lokasi collectstatic
+STATICFILES_DIRS = [                            # Lokasi tambahan file statis (manual)
     os.path.join(BASE_DIR, 'proyek/static'),
 ]
 
 # -----------------------------
 # File media (upload pengguna)
 # -----------------------------
-MEDIA_URL = '/media/'                                 # URL prefix untuk media
-MEDIA_ROOT = BASE_DIR / 'media'                       # Lokasi penyimpanan media
+MEDIA_URL = '/media/'                           # URL prefix untuk media
+MEDIA_ROOT = BASE_DIR / 'media'                 # Lokasi penyimpanan media
 
 # -----------------------------
 # Login dan Redirect
 # -----------------------------
-LOGIN_URL = '/login/'                                 # URL login jika belum login
-LOGIN_REDIRECT_URL = '/homepage/'                     # Arah setelah berhasil login
+LOGIN_URL = '/login/'                           # URL login jika belum login
+LOGIN_REDIRECT_URL = '/homepage/'               # Arah setelah berhasil login
 
 # -----------------------------
 # Django REST Framework
 # -----------------------------
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',          # Output API sebagai JSON
-        'rest_framework.renderers.BrowsableAPIRenderer',  # Antarmuka API browser
-    ]
+        'rest_framework.renderers.JSONRenderer',         # Output API sebagai JSON
+        'rest_framework.renderers.BrowsableAPIRenderer', # Antarmuka API browser
+    ],
+    # DEFAULT_AUTHENTICATION_CLASSES dan DEFAULT_PERMISSION_CLASSES tidak disetel di sini
+    # yang berarti secara default, API Anda akan mengizinkan akses publik (AllowAny)
+    # jika tidak ada permission_classes yang didefinisikan di ViewSet/APIView.
+    # Untuk produksi, sangat direkomendasikan untuk menambahkan autentikasi dan izin.
 }
+
+# -----------------------------
+# Konfigurasi CORS (Cross-Origin Resource Sharing)
+# -----------------------------
+# Mengizinkan semua origin untuk mengakses API. Ini penting untuk aplikasi Android Anda.
+# PENTING: Untuk produksi, disarankan untuk mengatur CORS_ALLOWED_ORIGINS
+# ke daftar domain/IP yang spesifik untuk keamanan yang lebih baik.
+CORS_ALLOW_ALL_ORIGINS = True
 
 # -----------------------------
 # Tipe field default untuk primary key
