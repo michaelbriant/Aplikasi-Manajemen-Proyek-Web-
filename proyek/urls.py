@@ -3,7 +3,6 @@ from . import views
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.views import LogoutView
 from django.urls import path, include
-# from .views import ProjectStatusOnlyAPIView # <-- BARIS INI DIHAPUS
 
 urlpatterns = [
     # ===== Beranda utama aplikasi =====
@@ -48,7 +47,6 @@ urlpatterns = [
 
     # ===== Integrasi Antar Modul =====
     path('pesan/', views.integrasi_aplikasi, name='integrasi'),     # Halaman integrasi pengiriman & status antar modul
-    # path('status-only/', ProjectStatusOnlyAPIView.as_view(), name='status-only'), # <-- BARIS INI DIHAPUS (duplikasi dengan API)
 
     path('api/', include('proyek.api_urls')),
 ]

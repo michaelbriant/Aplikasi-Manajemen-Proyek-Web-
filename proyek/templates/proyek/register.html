@@ -56,11 +56,41 @@
         padding: 14px 16px;
         border: 1px solid #ccc;
         border-radius: 12px;
-        margin-bottom: 12px;
+        margin-bottom: 12px; /* Ini akan di-override untuk input password oleh .password-input-wrapper */
         font-size: 15px;
         background-color: #f8fbff;
         box-sizing: border-box;
     }
+
+    /* Styling untuk Password Toggle - BARU/DIADAPTASI */
+    .password-input-wrapper {
+        position: relative;
+        width: 100%;
+        margin-bottom: 12px; /* Pindahkan margin-bottom ke wrapper */
+    }
+
+    .password-input-wrapper input {
+        padding-right: 40px; /* Beri ruang untuk tombol toggle */
+        margin-bottom: 0; /* Hapus margin-bottom dari input itu sendiri */
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 15px; /* Sesuaikan posisi horizontal */
+        top: 50%;
+        transform: translateY(-50%); /* Pusatkan vertikal */
+        cursor: pointer;
+        color: #6c757d; /* Warna ikon/teks toggle */
+        font-size: 14px; /* Ukuran font toggle */
+        font-weight: 500;
+        user-select: none; /* Cegah teks terpilih saat diklik */
+        white-space: nowrap; /* Pastikan teks tidak patah baris */
+    }
+
+    .password-toggle:hover {
+        color: #007bff; /* Efek hover */
+    }
+
 
     .register-container button {
         width: 100%;
@@ -176,8 +206,18 @@
             {% csrf_token %}
             {{ form.username }}
             {{ form.email }}
-            {{ form.password1 }}
-            {{ form.password2 }}
+            
+            {# Wrapper untuk input password1 (kata sandi baru) #}
+            <div class="password-input-wrapper">
+                {{ form.password1 }}
+                <span class="password-toggle" id="passwordToggle1">Lihat</span>
+            </div>
+
+            {# Wrapper untuk input password2 (konfirmasi kata sandi) #}
+            <div class="password-input-wrapper">
+                {{ form.password2 }}
+                <span class="password-toggle" id="passwordToggle2">Lihat</span>
+            </div>
 
             {% if form.errors %}
               <div style="color: #c0392b; text-align: left; margin-bottom: 10px;">
@@ -197,4 +237,31 @@
         <a href="{% url 'login' %}" class="back-link">Kembali ke Login</a>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fungsi untuk mengatur toggle kata sandi
+        function setupPasswordToggle(inputFieldId, toggleButtonId) {
+            const passwordInput = document.getElementById(inputFieldId);
+            const passwordToggle = document.getElementById(toggleButtonId);
+
+            if (passwordInput && passwordToggle) {
+                passwordToggle.addEventListener('click', function() {
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        passwordToggle.textContent = 'Sembunyikan';
+                    } else {
+                        passwordInput.type = 'password';
+                        passwordToggle.textContent = 'Lihat';
+                    }
+                });
+            }
+        }
+
+        // Memanggil fungsi untuk password1 dan password2
+        // Asumsi Django secara default memberikan ID input 'id_password1' dan 'id_password2'
+        setupPasswordToggle('id_password1', 'passwordToggle1'); 
+        setupPasswordToggle('id_password2', 'passwordToggle2');
+    });
+</script>
 {% endblock %}

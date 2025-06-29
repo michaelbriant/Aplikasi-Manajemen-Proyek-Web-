@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     # Aplikasi eksternal
     'widget_tweaks',       # Untuk kustomisasi form di template
     'rest_framework',      # Django REST framework untuk API
-    'corsheaders',         # <--- TAMBAHAN: Untuk mengelola Cross-Origin Resource Sharing (CORS)
+    'corsheaders',         # Untuk mengelola Cross-Origin Resource Sharing (CORS)
 ]
 
 # -----------------------------
@@ -55,7 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     # CORS middleware harus ditempatkan setinggi mungkin, sebelum middleware lain
     # yang mungkin membaca respons seperti CommonMiddleware atau GZipMiddleware.
-    'corsheaders.middleware.CorsMiddleware', # <--- TAMBAHAN: Middleware CORS
+    'corsheaders.middleware.CorsMiddleware', # Middleware CORS
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -124,7 +124,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Bahasa dan Zona Waktu
 # -----------------------------
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC' # Sesuaikan dengan zona waktu Jakarta jika perlu, misal 'Asia/Jakarta'
+TIME_ZONE = 'Asia/Jakarta'
 USE_I18N = True    # Aktifkan terjemahan
 USE_TZ = True      # Gunakan timezone-aware datetime
 

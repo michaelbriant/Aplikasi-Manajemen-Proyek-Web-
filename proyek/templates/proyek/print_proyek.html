@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cetak Proyek</title>
+    <title>Cetak Proyek - {{ proyek.name }}</title>
+    {# Load custom filters for template #}
+    {% load my_custom_filters %}
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -17,6 +19,35 @@
             margin-bottom: 25px;
             color: #000;
         }
+        h3 { /* Sub-judul utama untuk section */
+            font-size: 16px;
+            text-align: left;
+            margin-top: 35px; /* Lebih banyak spasi di atas setiap modul */
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd; /* Garis bawah tipis */
+            padding-bottom: 5px;
+        }
+        h4 { /* Sub-judul dalam kartu data */
+            font-size: 14px;
+            font-weight: bold;
+            color: #444;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+        h4:first-child { /* H4 pertama dalam kartu tidak perlu margin-top */
+            margin-top: 0;
+        }
+        h5 { /* Untuk sub-sub-judul (misal: Meaningful Objectives) */
+            font-size: 13px;
+            font-weight: bold;
+            color: #666;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            border-bottom: 1px dotted #eee; /* Garis putus-putus */
+            padding-bottom: 3px;
+            padding-left: 5px;
+        }
+
 
         .label {
             font-weight: bold;
@@ -54,12 +85,59 @@
             font-style: italic;
             color: #666;
             margin: 10px 0;
+            padding-left: 10px; /* Sedikit indentasi */
         }
 
         ul {
             margin: 4px 0;
             padding-left: 18px;
         }
+        ul.nested-list { /* Untuk daftar bersarang (misal aktivitas di pekerjaan) */
+            padding-left: 25px;
+        }
+
+
+        /* Styling tambahan untuk bagian integrasi */
+        .integration-section {
+            margin-top: 40px;
+            border-top: 2px solid #ccc;
+            padding-top: 20px;
+        }
+
+        .integration-section .data-card {
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .integration-section .data-card .data-row {
+            margin-bottom: 4px;
+        }
+
+        .integration-section .data-card .data-row strong {
+            display: inline-block;
+            min-width: 120px; /* Sesuaikan untuk perataan label */
+            font-weight: bold;
+            color: #333;
+        }
+        .integration-section .data-card p { /* Untuk paragraf status */
+            margin-bottom: 5px;
+        }
+        .integration-section .data-card .value-indent {
+            margin-left: 20px; /* Indentasi untuk deskripsi/aktivitas */
+            display: block;
+        }
+        .integration-section .data-card .sub-list {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        .integration-section .data-card .sub-list li {
+            margin-bottom: 3px;
+        }
+
 
         @media print {
             body {
@@ -70,20 +148,39 @@
                 margin: 20mm;
             }
 
-            h2, h3 {
+            h2, h3, h4, h5 { /* Pastikan semua heading avoid page break after */
                 page-break-after: avoid;
             }
 
             table, tr, td, th {
                 page-break-inside: avoid;
             }
+            .integration-section {
+                border-top: 1px dashed #ccc;
+                page-break-before: auto;
+                page-break-inside: avoid;
+            }
+            .integration-section .data-card {
+                box-shadow: none;
+                background-color: transparent;
+            }
+            .integration-section .data-card ul {
+                 list-style-type: disc;
+                 margin: 0 0 5px 15px;
+                 padding: 0;
+            }
+            .integration-section .data-card ul li {
+                padding: 0;
+            }
         }
     </style>
 </head>
 <body>
+    {# Load custom filters for template #}
+    {% load my_custom_filters %}
+
     <h2>Profile Project</h2>
 
-    <!-- Detail Proyek -->
     <table style="width: 100%; margin-bottom: 30px;">
         <tr>
             <td class="label">Nama:</td>
@@ -99,11 +196,11 @@
         </tr>
         <tr>
             <td class="label">Tanggal Mulai:</td>
-            <td>{{ proyek.start_date }}</td>
+            <td>{{ proyek.start_date|date:"d M Y" }}</td>
         </tr>
         <tr>
             <td class="label">Tanggal Selesai:</td>
-            <td>{{ proyek.end_date }}</td>
+            <td>{{ proyek.end_date|date:"d M Y" }}</td>
         </tr>
         <tr>
             <td class="label">Supervisor:</td>
@@ -135,9 +232,32 @@
                 {% endif %}
             </td>
         </tr>
+        {# --- Start fields for Project Closure (assuming they are in Project model) --- #}
+        <tr>
+            <td class="label">Evaluasi Akhir:</td>
+            <td>{{ proyek.final_evaluation|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Laporan Akhir:</td>
+            <td>
+                {% if proyek.final_report %}
+                    <a href="{{ proyek.final_report.url }}" target="_blank">Lihat Laporan</a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Ditandatangani Supervisor:</td>
+            <td>{{ proyek.supervisor_signed|yesno:"Ya,Tidak" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Ditandatangani Pemilik Proyek:</td>
+            <td>{{ proyek.owner_signed|yesno:"Ya,Tidak" }}</td>
+        </tr>
+        {# --- End fields for Project Closure --- #}
     </table>
 
-    <!-- Daftar Pekerjaan -->
     <h3>Daftar Pekerjaan</h3>
     {% if pekerjaan_list %}
         <table>
@@ -161,7 +281,7 @@
                         <td>{{ pekerjaan.nama }}</td>
                         <td>{{ pekerjaan.deskripsi }}</td>
                         <td>{{ pekerjaan.lokasi }}</td>
-                        <td>{{ pekerjaan.tanggal_mulai }} – {{ pekerjaan.tanggal_selesai }}</td>
+                        <td>{{ pekerjaan.tanggal_mulai|date:"d M Y" }} – {{ pekerjaan.tanggal_selesai|date:"d M Y" }}</td>
                         <td>{{ pekerjaan.supervisor }}</td>
                         <td>{{ pekerjaan.pelaksana|default:"-" }}</td>
                         <td>{{ pekerjaan.created_at|date:"d M Y H:i" }}</td>
@@ -171,7 +291,6 @@
             </tbody>
         </table>
 
-        <!-- Daftar Aktivitas -->
         {% for pekerjaan in pekerjaan_list %}
             <div>
                 <div class="aktivitas-heading">Aktivitas untuk: {{ pekerjaan.nama }}</div>
@@ -190,7 +309,7 @@
                             {% for aktivitas in pekerjaan.aktivitas.all %}
                                 <tr>
                                     <td>{{ aktivitas.nama }}</td>
-                                    <td>{{ aktivitas.waktu_pelaksanaan }}</td>
+                                    <td>{{ aktivitas.waktu_pelaksanaan|date:"d M Y" }}</td>
                                     <td>{{ aktivitas.pelaksana|default:"-" }}</td>
                                     <td>{{ aktivitas.created_at|date:"d M Y H:i" }}</td>
                                     <td>{{ aktivitas.updated_at|date:"d M Y H:i" }}</td>
@@ -206,6 +325,220 @@
     {% else %}
         <p class="no-data">Belum ada pekerjaan pada proyek ini.</p>
     {% endif %}
+
+    {# --- START NEW SECTION: INTEGRATION DATA FOR PRINT --- #}
+    <div class="integration-section">
+        <h2>Data Integrasi Modul Eksternal</h2>
+
+        {# --- IE Module Data --- #}
+        <h3>Intelligence Engineering (IE)</h3>
+        {% with ie_data=external_data.ie %}
+            {% if ie_data.status or ie_data.detail %}
+                {% if ie_data.status %}
+                <div class="data-card">
+                    <h4>Status Proyek</h4>
+                    <div class="data-row"><strong>Status:</strong> {{ ie_data.status.status|default:"Tidak Diketahui" }}</div>
+                </div>
+                {% endif %}
+
+                {% if ie_data.detail %}
+                <div class="data-card">
+                    <h4>Detail Proyek</h4>
+                    {% if ie_data.detail.meaningful_objectives %}
+                        <h5>🎯 Meaningful Objectives</h5>
+                        {% for key, value in ie_data.detail.meaningful_objectives.items %}
+                            {% if value and value != "-" %}
+                                <div class="data-row"><strong>{{ key|replace_underscore_with_space|title }}:</strong> {{ value }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}<p class="no-data">Tidak ada Meaningful Objectives.</p>{% endif %}
+
+                    {% if ie_data.detail.intelligence_experience %}
+                        <h5>🧠 Intelligence Experience</h5>
+                        {% for key, value in ie_data.detail.intelligence_experience.items %}
+                            {% if value and value != "-" %}
+                                <div class="data-row"><strong>{{ key|replace_underscore_with_space|title }}:</strong> {{ value }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}<p class="no-data">Tidak ada Intelligence Experience.</p>{% endif %}
+
+                    {% if ie_data.detail.intelligence_implementation %}
+                        <h5>🔧 Intelligence Implementation</h5>
+                        {% for key, value in ie_data.detail.intelligence_implementation.items %}
+                            {% if value and value != "-" and not key in "last_edited,last_edited_by" %}
+                                <div class="data-row"><strong>{{ key|replace_underscore_with_space|title }}:</strong> {{ value }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}<p class="no-data">Tidak ada Intelligence Implementation.</p>{% endif %}
+
+                    {% if ie_data.detail.batasan_pengembangan.limitation and ie_data.detail.batasan_pengembangan.limitation != "-" %}
+                        <h5>⚠️ Batasan Pengembangan</h5>
+                        <div class="data-row"><strong>Limitation:</strong> {{ ie_data.detail.batasan_pengembangan.limitation }}</div>
+                    {% else %}<p class="no-data">Tidak ada Batasan Pengembangan.</p>{% endif %}
+
+                    {% if ie_data.detail.status_realisasi.realization and ie_data.detail.status_realisasi.realization != "-" %}
+                        <h5>🚀 Status Realisasi</h5>
+                        <div class="data-row"><strong>Realization:</strong> {{ ie_data.detail.status_realisasi.realization }}</div>
+                    {% else %}<p class="no-data">Tidak ada Status Realisasi.</p>{% endif %}
+
+                    {% if ie_data.detail.perencanaan %}
+                        <h5>📅 Perencanaan</h5>
+                        {% for key, value in ie_data.detail.perencanaan.items %}
+                            {% if value and value != "-" and not key in "last_edited,last_edited_by" %}
+                                <div class="data-row"><strong>{{ key|replace_underscore_with_space|title }}:</strong> {{ value }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}<p class="no-data">Tidak ada Perencanaan.</p>{% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+                <p class="no-data">Data proyek tidak ditemukan di modul IE.</p>
+            {% endif %}
+        {% endwith %}
+
+        {# --- IC Module Data --- #}
+        <h3>Intelligence Creation (IC)</h3>
+        {% with ic_data=external_data.ic %}
+            {% if ic_data %}
+            <div class="data-card">
+                <h4>Status & Detail Proyek</h4>
+                <div class="data-row"><strong>Status:</strong> {{ ic_data.status_proyek_ic|default:"Tidak Diketahui" }}</div>
+                {% if ic_data.nama_proyek %}<div class="data-row"><strong>Nama Proyek:</strong> {{ ic_data.nama_proyek }}</div>{% endif %}
+                {% if ic_data.pekerjaan.0.deskripsi_pekerjaan %}<div class="data-row"><strong>Deskripsi Utama:</strong> {{ ic_data.pekerjaan.0.deskripsi_pekerjaan }}</div>{% endif %}
+                {% if ic_data.tanggal_mulai %}<div class="data-row"><strong>Tanggal Mulai:</strong> {{ ic_data.tanggal_mulai|format_iso_date_for_print }}</div>{% endif %}
+                {% if ic_data.tanggal_selesai %}<div class="data-row"><strong>Tanggal Selesai:</strong> {{ ic_data.tanggal_selesai|format_iso_date_for_print }}</div>{% endif %}
+
+                {% if ic_data.pekerjaan %}
+                    <h4>Daftar Pekerjaan:</h4>
+                    <ul class="sub-list"> {# Added class for specific styling #}
+                        {% for pekerjaan_ic in ic_data.pekerjaan %}
+                            <li>
+                                <strong>{{ pekerjaan_ic.nama_pekerjaan|default:"Nama Tidak Diketahui" }}</strong><br>
+                                {% if pekerjaan_ic.deskripsi_pekerjaan %}<span class="value-indent">Deskripsi: {{ pekerjaan_ic.deskripsi_pekerjaan }}</span><br>{% endif %}
+                                {% if pekerjaan_ic.lokasi %}<span class="value-indent">Lokasi: {{ pekerjaan_ic.lokasi }}</span><br>{% endif %}
+                                {% if pekerjaan_ic.tanggal_mulai and pekerjaan_ic.tanggal_selesai %}<span class="value-indent">Periode: {{ pekerjaan_ic.tanggal_mulai|format_iso_date_for_print }} - {{ pekerjaan_ic.tanggal_selesai|format_iso_date_for_print }}</span><br>{% endif %}
+                                {% if pekerjaan_ic.pelaksana_pekerjaan %}<span class="value-indent">Pelaksana: {{ pekerjaan_ic.pelaksana_pekerjaan }}</span><br>{% endif %}
+                                {% if pekerjaan_ic.supervisor_pekerjaan %}<span class="value-indent">Supervisor: {{ pekerjaan_ic.supervisor_pekerjaan }}</span><br>{% endif %}
+                                {% if pekerjaan_ic.status %}<span class="value-indent">Status: {{ pekerjaan_ic.status }}</span><br>{% endif %}
+
+                                {% if pekerjaan_ic.aktivitas %}
+                                    <span class="value-indent">Aktivitas:</span><br>
+                                    <ul class="sub-list nested-list"> {# Added class for specific styling #}
+                                        {% for aktivitas_ic in pekerjaan_ic.aktivitas %}
+                                            <li>&bull; <strong>{{ aktivitas_ic.nama_aktivitas|default:"Nama Tidak Diketahui" }}</strong> (Waktu: {{ aktivitas_ic.waktu_pelaksanaan|format_iso_date_for_print|default:"N/A" }}, Pelaksana: {{ aktivitas_ic.pelaksana_aktivitas|default:"N/A" }})</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}<p class="no-data">Tidak ada Pekerjaan dari modul IC.</p>{% endif %}
+            </div>
+            {% else %}
+                <p class="no-data">Data proyek tidak ditemukan di modul IC.</p>
+            {% endif %}
+        {% endwith %}
+
+        {# --- IMP Module Data --- #}
+        <h3>Implementation (IMP)</h3>
+        {% with imp_status=external_data.imp_status imp_detail=external_data.imp_detail %}
+            {% if imp_status or imp_detail %}
+                {% if imp_status %}
+                <div class="data-card">
+                    <h4>Status Proyek</h4>
+                    <div class="data-row"><strong>Nama Proyek:</strong> {{ imp_status.nama_project|default:"Tidak Diketahui" }}</div>
+                    <div class="data-row"><strong>Status:</strong> {{ imp_status.status|default:"Tidak Ada Status" }}</div>
+                </div>
+                {% endif %}
+
+                {% if imp_detail %}
+                <div class="data-card">
+                    <h4>Detail Proyek</h4>
+                    {% if imp_detail.nama_project %}<div class="data-row"><strong>Nama Proyek:</strong> {{ imp_detail.nama_project }}</div>{% endif %}
+                    {% if imp_detail.deskripsi %}<div class="data-row"><strong>Deskripsi:</strong> {{ imp_detail.deskripsi }}</div>{% endif %}
+                    {% if imp_detail.model %}<div class="data-row"><strong>Model:</strong> {{ imp_detail.model }}</div>{% endif %}
+
+                    {% if imp_detail.data_lingkungan %}
+                        <h4>Data Lingkungan:</h4><ul class="sub-list">
+                        {% for item in imp_detail.data_lingkungan %}
+                            <li>
+                                <strong>RAM:</strong> {{ item.ram|default:'N/A' }},
+                                <strong>Database:</strong> {{ item.database|default:'N/A' }},
+                                <strong>CPU:</strong> {{ item.cpu|default:'N/A' }},
+                                <strong>OS:</strong> {{ item.os|default:'N/A' }}
+                                {% if item.input_file %}, <a href="{{ item.input_file }}" target="_blank">File Lingkungan</a>{% endif %}
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}<p class="no-data">Tidak ada Data Lingkungan.</p>{% endif %}
+
+                    {% if imp_detail.catatan_pemeliharaan %}
+                        <h4>Catatan Pemeliharaan:</h4><ul class="sub-list">
+                        {% for item in imp_detail.catatan_pemeliharaan %}
+                            <li>
+                                <strong>Suggest:</strong> {{ item.suggest|default:'N/A' }},
+                                <strong>Category:</strong> {{ item.category|default:'N/A' }},
+                                <strong>Status:</strong> {{ item.status|default:'N/A' }}
+                                {% if item.start_date and item.end_date %}, <strong>Periode:</strong> {{ item.start_date|format_iso_date_for_print }} - {{ item.end_date|format_iso_date_for_print }}{% endif %}
+                                {% if item.stakeholder %}, <strong>Stakeholder:</strong> {{ item.stakeholder|default:'N/A' }}{% endif %}
+                                {% if item.role %}, <strong>Role:</strong> {{ item.role|default:'N/A' }}{% endif %}
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}<p class="no-data">Tidak ada Catatan Pemeliharaan.</p>{% endif %}
+
+                    {% if imp_detail.data_transaksi %}
+                        <h4>Data Transaksi:</h4><ul class="sub-list">
+                        {% for item in imp_detail.data_transaksi %}
+                            <li>
+                                <strong>Deskripsi Data:</strong> {{ item.deskripsi_data|default:'N/A' }}
+                                {% if item.input_file %}, <a href="{{ item.input_file }}" target="_blank">File Transaksi</a>{% endif %}
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}<p class="no-data">Tidak ada Data Transaksi.</p>{% endif %}
+
+                    {% if imp_detail.kinerja %}
+                        <h4>Kinerja Model:</h4><ul class="sub-list">
+                        {% for item in imp_detail.kinerja %}
+                            {% if item.model_performance %}
+                                <li>
+                                    <strong>Performa Model:</strong>
+                                    {# Safely parse Python dict string if it comes in that format #}
+                                    {% with parsed_performance=item.model_performance|parse_python_dict_string %}
+                                        {% if parsed_performance %}
+                                            {% for perf_key, perf_value in parsed_performance.items %}
+                                                {{ perf_key|replace_underscore_with_space|title }}: {{ perf_value }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            {{ item.model_performance }} {# Fallback to raw string if parsing fails #}
+                                        {% endif %}
+                                    {% endwith %}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        </ul>
+                    {% else %}<p class="no-data">Tidak ada Data Kinerja Model.</p>{% endif %}
+
+                    {% if imp_detail.aktivitas_implementasi %}
+                        <h4>Aktivitas Implementasi:</h4><ul class="sub-list">
+                        {% for item in imp_detail.aktivitas_implementasi %}
+                            <li>
+                                <strong>Tipe Model:</strong> {{ item.model_type|default:'N/A' }},
+                                <strong>Algoritma Digunakan:</strong> {{ item.algorithm_used|default:'N/A' }}
+                                {% if item.hyperparameters %}, <strong>Hyperparameters:</strong> {{ item.hyperparameters }}{% endif %}
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}<p class="no-data">Tidak ada Aktivitas Implementasi.</p>{% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+                <p class="no-data">Data proyek tidak ditemukan di modul IMP.</p>
+            {% endif %}
+        {% endwith %}
+    </div>
+    {# --- END NEW SECTION: INTEGRATION DATA FOR PRINT --- #}
 
     <script>
         window.onload = function () {

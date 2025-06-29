@@ -18,7 +18,7 @@
         color: #1a2b44; /* Biru gelap untuk judul utama */
         font-weight: 700; /* Judul lebih tebal */
         font-size: 28px; /* Judul lebih besar */
-        text-align: center; /* Pusatkan judul */
+        text-align: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
         border-bottom: 2px solid #e0eaf1; /* Garis pemisah lebih menonjol */
@@ -247,7 +247,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const modulSelect = document.getElementById("modul-select");
     const projectSelect = document.getElementById("project-select");
 
-    // Pemetaan URL API untuk setiap modul
     const apiEndpoints = {
         'ie': {
             'status': "https://fabyaanusakti.pythonanywhere.com/api/status-only/",
@@ -257,9 +256,36 @@ document.addEventListener("DOMContentLoaded", function () {
             'main': "https://arlellll.pythonanywhere.com/api-content/project-statuses/"
         },
         'imp': {
-            'status': "https://tasana.pythonanywhere.com/api/project-status/"
+            'status': "https://tasana.pythonanywhere.com/api/project-status/",
+            'detail': "https://tasana.pythonanywhere.com/api/projects-nested/"
         }
     };
+
+    // Fungsi pembantu untuk membersihkan string nama dari '(Status: ...)'
+    function stripStatusFromName(name) {
+        const regex = /\s*\(Status:\s*[^)]+\)\s*$/;
+        return name.replace(regex, '').trim();
+    }
+
+    // Fungsi pembantu untuk memformat string tanggal ISO atau tanggal biasa
+    function formatISODate(isoString) {
+        if (!isoString) return 'N/A';
+        try {
+            const date = new Date(isoString);
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        } catch (e) {
+            if (isoString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const parts = isoString.split('-');
+                const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                 if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                }
+            }
+        }
+        return isoString;
+    }
 
     checkButton.addEventListener("click", async function () {
         const modul = modulSelect.value;
@@ -276,7 +302,7 @@ document.addEventListener("DOMContentLoaded", function () {
         resultDiv.className = "loading";
 
         let html = "";
-        let statusFetched = false;
+        let dataFoundInAnyApi = false; // Flag to track if ANY data was found for the project in the selected module
 
         try {
             if (modul === 'ie') {
@@ -291,14 +317,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 const statusProyek = statusList.find(p => p.id === selectedProjectId);
                 const detailProyek = projekList.find(p => p.id_projek === selectedProjectId);
 
-                html += `<h3>Integrasi Modul Intelligence Engineering (IE)</h3>`; // Judul modul utama di hasil
+                html += `<h3>Integrasi Modul Intelligence Engineering (IE)</h3>`;
                 if (statusProyek) {
                     html += `<div class="data-card"><h4>Status Proyek:</h4><p><strong>Status:</strong> ${statusProyek.status}</p></div>`;
-                    statusFetched = true;
+                    dataFoundInAnyApi = true;
                 }
 
                 if (detailProyek) {
-                    // Meaningful Objectives
+                    dataFoundInAnyApi = true; // Data found, set flag to true
+
                     const meaningfulObjectives = Object.values(detailProyek.meaningful_objectives || {}).some(v => v && v !== "-");
                     if (meaningfulObjectives) {
                         html += `<div class="data-card"><h4>🎯 Meaningful Objectives</h4>`;
@@ -310,7 +337,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         html += `</div>`;
                     }
 
-                    // Intelligence Experience
                     const intelligenceExperience = Object.values(detailProyek.intelligence_experience || {}).some(v => v && v !== "-");
                     if (intelligenceExperience) {
                         html += `<div class="data-card"><h4>🧠 Intelligence Experience</h4>`;
@@ -322,7 +348,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         html += `</div>`;
                     }
 
-                    // Intelligence Implementation
                     const intelligenceImplementation = Object.values(detailProyek.intelligence_implementation || {}).some(v => v && v !== "-");
                     if (intelligenceImplementation) {
                         html += `<div class="data-card"><h4>🔧 Intelligence Implementation</h4>`;
@@ -334,21 +359,18 @@ document.addEventListener("DOMContentLoaded", function () {
                         html += `</div>`;
                     }
 
-                    // Batasan Pengembangan
                     if (detailProyek.batasan_pengembangan?.limitation && detailProyek.batasan_pengembangan.limitation !== "-") {
                         html += `<div class="data-card"><h4>⚠️ Batasan Pengembangan</h4>`;
                         html += `<div><strong>Limitation:</strong> ${detailProyek.batasan_pengembangan.limitation}</div>`;
                         html += `</div>`;
                     }
 
-                    // Status Realisasi
                     if (detailProyek.status_realisasi?.realization && detailProyek.status_realisasi.realization !== "-") {
                         html += `<div class="data-card"><h4>🚀 Status Realisasi</h4>`;
                         html += `<div><strong>Realization:</strong> ${detailProyek.status_realisasi.realization}</div>`;
                         html += `</div>`;
                     }
 
-                    // Perencanaan
                     const perencanaan = Object.values(detailProyek.perencanaan || {}).some(v => v && v !== "-");
                     if (perencanaan) {
                         html += `<div class="data-card"><h4>📅 Perencanaan</h4>`;
@@ -359,51 +381,53 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                         html += `</div>`;
                     }
-                } else if (!statusProyek && html === `<h3>Integrasi Modul Intelligence Engineering (IE)</h3>`) { // Jika hanya judul modul yang ditambahkan dan tidak ada data
-                    html += `<em>Data detail proyek tidak ditemukan di modul IE.</em>`;
+                }
+
+                if (!statusProyek && !detailProyek) { // If neither status nor detail was found for IE
+                    html += `<em>Data proyek tidak ditemukan di modul IE.</em>`;
                 }
 
             } else if (modul === 'ic') {
                 const response = await fetch(apiEndpoints.ic.main);
-                const projectDataList = await response.json(); // Ini adalah daftar, bukan satu objek
+                const projectDataList = await response.json();
 
-                // Menggunakan external_id untuk modul IC, dikonversi ke string untuk perbandingan
                 const projectData = projectDataList.find(p => String(p.external_id) === String(selectedProjectId));
 
                 html += `<h3>Integrasi Modul Intelligence Creation (IC)</h3>`;
                 if (projectData) {
-                    // Menggunakan status_proyek_ic untuk modul IC
+                    dataFoundInAnyApi = true; // Data found, set flag to true
                     html += `<div class="data-card"><h4>Status Proyek:</h4><p><strong>Status:</strong> ${projectData.status_proyek_ic}</p></div>`;
-                    statusFetched = true;
 
-                    html += `<div class="data-card"><h4>📋 Detail Pekerjaan (dari IC)</h4>`;
+                    html += `<div class="data-card"><h4>📋 Detail Pekerjaan</h4>`; // Dihilangkan "(dari IC)"
                     if (projectData.nama_proyek) html += `<div><strong>Nama Proyek:</strong> ${projectData.nama_proyek}</div>`;
-                    // Deskripsi proyek utama mungkin berada di entri 'pekerjaan' pertama
                     if (projectData.pekerjaan && projectData.pekerjaan[0] && projectData.pekerjaan[0].deskripsi_pekerjaan) {
-                         html += `<div><strong>Deskripsi Utama:</strong> ${projectData.pekerjaan[0].deskripsi_pekerjaan}</div>`;
+                           html += `<div><strong>Deskripsi Utama:</strong> ${projectData.pekerjaan[0].deskripsi_pekerjaan}</div>`;
                     }
                     if (projectData.tanggal_mulai) html += `<div><strong>Tanggal Mulai:</strong> ${projectData.tanggal_mulai}</div>`;
                     if (projectData.tanggal_selesai) html += `<div><strong>Tanggal Selesai:</strong> ${projectData.tanggal_selesai}</div>`;
 
-                    // Tangani daftar 'pekerjaan' (tugas/job)
                     if (projectData.pekerjaan && projectData.pekerjaan.length > 0) {
                         html += `<h4>Daftar Pekerjaan:</h4>`;
-                        html += `<ul>`; // Mulai daftar tak berurutan untuk pekerjaan
+                        html += `<ul>`;
                         projectData.pekerjaan.forEach(pekerjaan => {
-                            html += `<li>`; // Setiap pekerjaan adalah item daftar
-                            html += `<strong>${pekerjaan.nama_pekerjaan || 'Nama Tidak Diketahui'}</strong> (Status: ${pekerjaan.status || 'N/A'})<br>`;
+                            html += `<li>`;
+                            const namaPekerjaanBersih = stripStatusFromName(pekerjaan.nama_pekerjaan || 'Nama Tidak Diketahui');
+                            html += `<strong>${namaPekerjaanBersih}</strong><br>`;
                             if (pekerjaan.deskripsi_pekerjaan) html += `&nbsp;&nbsp;&nbsp;&nbsp;Deskripsi: ${pekerjaan.deskripsi_pekerjaan}<br>`;
                             if (pekerjaan.lokasi) html += `&nbsp;&nbsp;&nbsp;&nbsp;Lokasi: ${pekerjaan.lokasi}<br>`;
-                            if (pekerjaan.tanggal_mulai && pekerjaan.tanggal_selesai) html += `&nbsp;&nbsp;&nbsp;&nbsp;Periode: ${pekerjaan.tanggal_mulai} - ${pekerjaan.tanggal_selesai}<br>`;
+                            const tanggalMulaiPekerjaan = formatISODate(pekerjaan.tanggal_mulai);
+                            const tanggalSelesaiPekerjaan = formatISODate(pekerjaan.tanggal_selesai);
+                            if (pekerjaan.tanggal_mulai && pekerjaan.tanggal_selesai) html += `&nbsp;&nbsp;&nbsp;&nbsp;Periode: ${tanggalMulaiPekerjaan} - ${tanggalSelesaiPekerjaan}<br>`;
                             if (pekerjaan.pelaksana_pekerjaan) html += `&nbsp;&nbsp;&nbsp;&nbsp;Pelaksana: ${pekerjaan.pelaksana_pekerjaan}<br>`;
                             if (pekerjaan.supervisor_pekerjaan) html += `&nbsp;&nbsp;&nbsp;&nbsp;Supervisor: ${pekerjaan.supervisor_pekerjaan}<br>`;
+                            if (pekerjaan.status) html += `&nbsp;&nbsp;&nbsp;&nbsp;Status: ${pekerjaan.status}<br>`;
 
-                            // Tangani 'aktivitas' di dalam setiap 'pekerjaan'
                             if (pekerjaan.aktivitas && pekerjaan.aktivitas.length > 0) {
                                 html += `&nbsp;&nbsp;&nbsp;&nbsp;Aktivitas:<br>`;
-                                html += `&nbsp;&nbsp;&nbsp;&nbsp;<ul>`; // Daftar bersarang untuk aktivitas
+                                html += `&nbsp;&nbsp;&nbsp;&nbsp;<ul>`;
+                                // Loop for aktivitas (assuming `pekerjaan.aktivitas` is an array from IC API)
                                 pekerjaan.aktivitas.forEach(aktivitas => {
-                                    html += `&nbsp;&nbsp;&nbsp;&nbsp;<li>&bull; <strong>${aktivitas.nama_aktivitas || 'Nama Tidak Diketahui'}</strong> (Waktu: ${aktivitas.waktu_pelaksanaan ? new Date(aktivitas.waktu_pelaksanaan).toLocaleDateString('id-ID') : 'N/A'}, Pelaksana: ${aktivitas.pelaksana_aktivitas || 'N/A'})</li>`;
+                                    html += `&nbsp;&nbsp;&nbsp;&nbsp;<li>&bull; <strong>${aktivitas.nama_aktivitas || 'Nama Tidak Diketahui'}</strong> (Waktu: ${aktivitas.waktu_pelaksanaan ? formatISODate(aktivitas.waktu_pelaksanaan) : 'N/A'}, Pelaksana: ${aktivitas.pelaksana_aktivitas || 'N/A'})</li>`;
                                 });
                                 html += `&nbsp;&nbsp;&nbsp;&nbsp;</ul>`;
                             }
@@ -417,30 +441,124 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
             } else if (modul === 'imp') {
-                const response = await fetch(apiEndpoints.imp.status);
-                const projectStatuses = await response.json();
+                // Panggil kedua API secara paralel
+                const [statusRes, detailRes] = await Promise.all([
+                    fetch(apiEndpoints.imp.status),
+                    fetch(apiEndpoints.imp.detail)
+                ]);
 
-                // Menggunakan 'id' untuk modul IMP, membandingkan angka
-                const projectStatus = projectStatuses.find(p => p.id === selectedProjectId);
+                const projectStatuses = await statusRes.json();
+                const projectDataList = await detailRes.json();
+
+                const projectStatus = projectStatuses.find(p => String(p.external_id) === String(selectedProjectId)); // Cari berdasarkan ID untuk status
+                const projectData = projectDataList.find(p => String(p.external_id) === String(selectedProjectId)); // Cari berdasarkan external_id untuk detail
 
                 html += `<h3>Integrasi Modul Implementation (IMP)</h3>`;
+                let statusCardHtml = '';
+                let detailCardHtml = '';
+
+                // Tampilkan Status Proyek
                 if (projectStatus) {
-                    html += `<div class="data-card"><h4>Status Proyek:</h4><p><strong>Nama Proyek:</strong> ${projectStatus.nama_proyek || 'Tidak Diketahui'}<br><strong>Status:</strong> ${projectStatus.status}</p></div>`;
-                    statusFetched = true;
-                    // Catatan: API IMP yang disediakan hanya memberikan nama proyek dan status, tidak detail tugas/aktivitas
+                    statusCardHtml = `<div class="data-card"><h4>Status Proyek:</h4><p><strong>Nama Proyek:</strong> ${projectStatus.nama_project || 'Tidak Diketahui'}<br><strong>Status:</strong> ${projectStatus.status !== null ? projectStatus.status : 'Tidak Ada Status'}</p></div>`;
+                    dataFoundInAnyApi = true;
                 } else {
-                    html += `<em>Status proyek tidak ditemukan di modul Implementation.</em>`;
+                    statusCardHtml = `<div class="data-card"><h4>Status Proyek:</h4><p><em>Status proyek tidak ditemukan untuk ID ${selectedProjectId} di API ini.</em></p></div>`;
+                }
+                html += statusCardHtml;
+
+
+                // Tampilkan Detail Proyek
+                if (projectData) {
+                    dataFoundInAnyApi = true; // Set true jika detail ditemukan
+                    detailCardHtml += `<div class="data-card"><h4>Detail Proyek:</h4>`; // Dihilangkan "(dari IMP Nested API)"
+                    if (projectData.nama_project) detailCardHtml += `<div><strong>Nama Proyek:</strong> ${projectData.nama_project}</div>`;
+                    if (projectData.deskripsi) detailCardHtml += `<div><strong>Deskripsi:</strong> ${projectData.deskripsi}</div>`;
+                    if (projectData.model) detailCardHtml += `<div><strong>Model:</strong> ${projectData.model}</div>`;
+
+                    if (projectData.data_lingkungan && projectData.data_lingkungan.length > 0) {
+                        detailCardHtml += `<h4>Data Lingkungan:</h4><ul>`;
+                        projectData.data_lingkungan.forEach(item => {
+                            detailCardHtml += `<li><strong>RAM:</strong> ${item.ram || 'N/A'}, <strong>Database:</strong> ${item.database || 'N/A'}, <strong>CPU:</strong> ${item.cpu || 'N/A'}, <strong>OS:</strong> ${item.os || 'N/A'}`;
+                            if (item.input_file) detailCardHtml += `, <a href="${item.input_file}" target="_blank">File Lingkungan</a>`;
+                            detailCardHtml += `</li>`;
+                        });
+                        detailCardHtml += `</ul>`;
+                    } else {
+                        detailCardHtml += `<p class="no-data">Tidak ada Data Lingkungan.</p>`;
+                    }
+
+                    if (projectData.catatan_pemeliharaan && projectData.catatan_pemeliharaan.length > 0) {
+                        detailCardHtml += `<h4>Catatan Pemeliharaan:</h4><ul>`;
+                        projectData.catatan_pemeliharaan.forEach(item => {
+                            detailCardHtml += `<li><strong>Suggest:</strong> ${item.suggest || 'N/A'}, <strong>Category:</strong> ${item.category || 'N/A'}, <strong>Status:</strong> ${item.status || 'N/A'}`;
+                            if (item.start_date && item.end_date) detailCardHtml += `, <strong>Periode:</strong> ${formatISODate(item.start_date)} - ${formatISODate(item.end_date)}`;
+                            if (item.stakeholder) detailCardHtml += `, <strong>Stakeholder:</strong> ${item.stakeholder || 'N/A'}`;
+                            if (item.role) detailCardHtml += `, <strong>Role:</strong> ${item.role || 'N/A'}`;
+                            detailCardHtml += `</li>`;
+                        });
+                        detailCardHtml += `</ul>`;
+                    } else {
+                        detailCardHtml += `<p class="no-data">Tidak ada Catatan Pemeliharaan.</p>`;
+                    }
+
+                    if (projectData.data_transaksi && projectData.data_transaksi.length > 0) {
+                        detailCardHtml += `<h4>Data Transaksi:</h4><ul>`;
+                        projectData.data_transaksi.forEach(item => {
+                            detailCardHtml += `<li><strong>Deskripsi Data:</strong> ${item.deskripsi_data || 'N/A'}`;
+                            if (item.input_file) detailCardHtml += `, <a href="${item.input_file}" target="_blank">File Transaksi</a>`;
+                            detailCardHtml += `</li>`;
+                        });
+                        detailCardHtml += `</ul>`;
+                    } else {
+                        detailCardHtml += `<p class="no-data">Tidak ada Data Transaksi.</p>`;
+                    }
+
+                    if (projectData.kinerja && projectData.kinerja.length > 0) {
+                        detailCardHtml += `<h4>Kinerja Model:</h4><ul>`;
+                        projectData.kinerja.forEach(item => {
+                            if (item.model_performance) detailCardHtml += `<li><strong>Performa Model:</strong> ${item.model_performance}</li>`;
+                        });
+                        detailCardHtml += `</ul>`;
+                    } else {
+                        detailCardHtml += `<p class="no-data">Tidak ada Data Kinerja Model.</p>`;
+                    }
+
+                    if (projectData.aktivitas_implementasi && projectData.aktivitas_implementasi.length > 0) {
+                        detailCardHtml += `<h4>Aktivitas Implementasi:</h4><ul>`;
+                        projectData.aktivitas_implementasi.forEach(item => {
+                            detailCardHtml += `<li><strong>Tipe Model:</strong> ${item.model_type || 'N/A'}, <strong>Algoritma Digunakan:</strong> ${item.algorithm_used || 'N/A'}`;
+                            if (item.hyperparameters) detailCardHtml += `, <strong>Hyperparameters:</strong> ${item.hyperparameters}`;
+                            html += `</li>`;
+                        });
+                        detailCardHtml += `</ul>`;
+                    } else {
+                        detailCardHtml += `<p class="no-data">Tidak ada Aktivitas Implementasi.</p>`;
+                    }
+                    detailCardHtml += `</div>`; // Close data-card for nested API details
+                } else {
+                    detailCardHtml = `<div class="data-card"><h4>Detail Proyek:</h4><p><em>Detail proyek tidak ditemukan untuk ID ${selectedProjectId} di API ini.</em></p></div>`; // Dihilangkan "(dari IMP Nested API)"
+                }
+                html += detailCardHtml; // Tambahkan detail HTML setelah status HTML
+
+                // Jika status dan detail tidak ditemukan di modul IMP
+                if (!projectStatus && !projectData) {
+                    html = `<h3>Integrasi Modul Implementation (IMP)</h3><em>Data proyek tidak ditemukan di modul Implementation.</em>`;
                 }
             }
 
-            if (!statusFetched && html === "") {
+            // Pesan akhir berdasarkan apakah ada data yang ditemukan di modul yang dipilih
+            if (!dataFoundInAnyApi && html.includes("<h3>") && !html.includes("<em>")) {
+                // If a module title was added but no specific data cards/messages, it means no data was truly found.
+                // This condition handles cases where initial module title is added, but sub-sections are empty.
+                 showResult(html + `<p class="no-data">Tidak ada data relevan yang ditemukan untuk proyek ini di modul yang dipilih.</p>`, "error");
+            } else if (!dataFoundInAnyApi) { // If absolutely no data or module title was added
                 showResult("Data proyek tidak ditemukan di modul ini.", "error");
             } else {
                 showResult(html, "success");
             }
 
         } catch (error) {
-            showResult("❌ Gagal mengambil data. Pastikan API tersedia dan ID proyek benar.", "error");
+            showResult("❌ Gagal mengambil data. Pastikan API tersedia dan ID proyek benar, serta format respons API valid.", "error");
             console.error("Error fetching data:", error);
         } finally {
             checkButton.textContent = "Periksa Status & Detail";
@@ -454,7 +572,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function formatKey(key) {
-        // Fungsi untuk memformat kunci dari snake_case menjadi Judul Biasa
         return key.replace(/_/g, " ").replace(/\b\w/g, char => char.toUpperCase());
     }
 });

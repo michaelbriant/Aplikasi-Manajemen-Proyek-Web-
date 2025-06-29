@@ -1,14 +1,16 @@
-# ====== IMPORT DARI DJANGO & LIB TAMBAHAN ======
-from django.shortcuts import render, redirect, get_object_or_404   # Untuk render template HTML, redirect URL, dan ambil objek dari DB atau beri 404 jika tidak ada
-from django.contrib import messages   # Untuk menampilkan pesan notifikasi (sukses, error, dll)
-from django.contrib.auth import authenticate, login, logout   # Fungsi login/logout & verifikasi user
-from django.contrib.auth.decorators import login_required   # Dekorator untuk membatasi akses hanya untuk user yang login
-from django.contrib.auth.models import User   # Model User bawaan Django
-from django.contrib.auth.forms import SetPasswordForm   # Form bawaan Django untuk set ulang password
+# proyek/views.py
 
-from django.views.decorators.http import require_POST   # Membatasi agar view hanya menerima method POST
-from django.views.decorators.csrf import csrf_exempt   # Menonaktifkan CSRF protection (gunakan hati-hati)
-from django.http import JsonResponse   # Untuk mengirim response berupa JSON
+# ====== IMPORT DARI DJANGO & LIB TAMBAHAN ======
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import SetPasswordForm
+
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 
 # ====== IMPORT MODEL, FORM, SERIALIZER APLIKASI SENDIRI ======
 from .models import (
@@ -25,24 +27,24 @@ from .serializers import (
 )
 
 # ====== LIB TAMBAHAN UNTUK FILE, TANGGAL, FORMAT DATA ======
-from django.template.loader import render_to_string   # Render HTML ke string (misalnya untuk email/template dinamis)
-from django.core.files.base import ContentFile   # Untuk menangani file upload berbasis data (seperti Base64)
-from django.utils.dateformat import DateFormat   # Format tanggal
-from django.utils.formats import get_format   # Ambil format lokal
-from django.core.serializers.json import DjangoJSONEncoder   # JSON encoder yang support format Django (tanggal, dst)
-from django.db.models import Q, Min, Max   # Untuk query filter dan agregasi
+from django.template.loader import render_to_string
+from django.core.files.base import ContentFile
+from django.utils.dateformat import DateFormat
+from django.utils.formats import get_format
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Q, Min, Max
 
-from datetime import datetime, date   # Manipulasi waktu standar
-import base64   # Untuk decoding file base64 (misal foto)
-import json   # Untuk parsing JSON
-import requests   # Untuk akses API eksternal (integrasi)
+from datetime import datetime, date
+import base64
+import json
+import requests # <--- PASTIKAN INI ADA, SUDAH ADA DI KODE ANDA
 
 # ====== REST FRAMEWORK UNTUK API VIEW & ENDPOINT ======
-from rest_framework import viewsets   # Untuk membuat ViewSet REST
-from rest_framework.views import APIView   # APIView berbasis class
-from rest_framework.response import Response   # Format response REST
-from rest_framework.decorators import action   # Tambahan action kustom di ViewSet
-from rest_framework import permissions # <--- TAMBAHAN: Untuk mengelola izin
+from rest_framework import viewsets
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework import permissions
 
 # ====== LANDING PAGE ======
 def landing_page(request):
@@ -53,7 +55,7 @@ def landing_page(request):
 def custom_logout(request):
     # Fungsi logout untuk mengakhiri sesi pengguna
     logout(request)
-    return redirect('landing')   # Arahkan kembali ke halaman utama
+    return redirect('landing')
 
 # ====== REGISTRASI ======
 def register(request):
@@ -61,10 +63,10 @@ def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()   # Simpan user ke database
-            return redirect('login')   # Setelah berhasil daftar, arahkan ke login
+            form.save()
+            return redirect('login')
     else:
-        form = CustomUserCreationForm()   # Form kosong jika GET
+        form = CustomUserCreationForm()
     return render(request, 'proyek/register.html', {'form': form})
 
 # ====== LOGIN VIEW ======
@@ -73,13 +75,13 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        user = authenticate(request, username=username, password=password)   # Verifikasi user
+        user = authenticate(request, username=username, password=password)
         if user:
-            login(request, user)   # Jika valid, login user
-            return redirect('homepage')   # Arahkan ke halaman utama
+            login(request, user)
+            return redirect('homepage')
         else:
-            messages.error(request, 'Username atau password salah.')   # Tampilkan pesan kesalahan
-    return render(request, 'proyek/login.html')   # Tampilkan form login
+            messages.error(request, 'Username atau password salah.')
+    return render(request, 'proyek/login.html')
 
 # ====== RESET PASSWORD (LANGKAH 1 - INPUT EMAIL) ======
 def reset_password_email_view(request):
@@ -92,18 +94,18 @@ def reset_password_email_view(request):
         except User.DoesNotExist:
             messages.error(request, 'Email tidak ditemukan.')
             return redirect('reset_password_email')
-    return render(request, 'proyek/password_reset.html')   # Form input email
+    return render(request, 'proyek/password_reset.html')
 
 # ====== RESET PASSWORD (LANGKAH 2 - SET PASSWORD BARU) ======
 def set_new_password_view(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    form = CustomSetPasswordForm(user, request.POST or None)   # Form custom reset password
+    form = CustomSetPasswordForm(user, request.POST or None)
 
     if request.method == 'POST':
         print("📥 POST diterima")
         if form.is_valid():
             print("✅ Form valid, menyimpan password...")
-            form.save()   # Simpan password baru
+            form.save()
             messages.success(request, 'Kata sandi berhasil diatur ulang.')
             return redirect('login')
         else:
@@ -117,9 +119,9 @@ def profile_user(request):
     return render(request, 'proyek/profile_user.html')
 
 # ====== HOMEPAGE ======
-@login_required   # hanya bisa diakses setelah login
+@login_required
 def homepage(request):
-    semua_proyek = Project.objects.all()   # Ambil semua proyek dari database
+    semua_proyek = Project.objects.all()
     return render(request, 'proyek/homepage.html', {
         'semua_proyek': semua_proyek
     })
@@ -127,17 +129,15 @@ def homepage(request):
 # ====== TAMBAH PROYEK ======
 def tambah_proyek(request):
     if request.method == 'POST':
-        # Cek apakah user klik tombol "Simpan dan Tambah Pekerjaan"
         if 'save_and_add_pekerjaan' in request.POST:
-            request.session['draft_proyek'] = request.POST   # Simpan data proyek sementara di session
-            return redirect('draft_daftar_pekerjaan')   # Redirect ke form pekerjaan
+            request.session['draft_proyek'] = request.POST
+            return redirect('draft_daftar_pekerjaan')
 
-        form = ProjectForm(request.POST)   # Inisialisasi form proyek
+        form = ProjectForm(request.POST)
         if form.is_valid():
-            proyek = form.save(commit=False)   # Buat instance proyek tanpa langsung simpan
-            proyek.save()   # Simpan proyek ke DB
+            proyek = form.save(commit=False)
+            proyek.save()
 
-            # Ambil data anggota dari inputan "id:role,id:role"
             anggota_input = request.POST.get('members', '')
             if anggota_input:
                 parsed = anggota_input.split(',')
@@ -146,20 +146,17 @@ def tambah_proyek(request):
                         id_str, role = item.split(':', 1)
                         if id_str.strip().isdigit():
                             member_id = int(id_str.strip())
-                            # Simpan relasi proyek dengan member dan role-nya
                             ProjectMember.objects.create(
                                 project=proyek,
                                 member_id=member_id,
                                 role=role.strip()
                             )
-
-            return redirect('homepage')   # Setelah berhasil, kembali ke halaman utama
+            return redirect('homepage')
     else:
-        # Ambil data draft proyek dari session (jika ada)
         initial_data = request.session.pop('draft_proyek', None)
         form = ProjectForm(initial=initial_data) if initial_data else ProjectForm()
 
-    anggota_list = TeamMember.objects.all()   # Ambil daftar semua anggota
+    anggota_list = TeamMember.objects.all()
     return render(request, 'proyek/form_proyek.html', {
         'form': form,
         'anggota_list': anggota_list
@@ -170,7 +167,6 @@ def edit_proyek(request, pk):
     proyek = get_object_or_404(Project, pk=pk)
     anggota_list = TeamMember.objects.all()
 
-    # Cegah pengeditan jika proyek sudah ditutup
     if proyek.status == 'Selesai':
         messages.error(request, "Proyek sudah ditutup dan tidak bisa diubah.")
         return redirect('homepage')
@@ -181,7 +177,6 @@ def edit_proyek(request, pk):
             proyek = form.save(commit=False)
             proyek.save()
 
-            # Proses anggota baru dari input
             anggota_input = request.POST.get('members', '')
             parsed = anggota_input.split(',') if anggota_input else []
             id_list = []
@@ -195,10 +190,8 @@ def edit_proyek(request, pk):
                         id_list.append(id_int)
                         role_map[id_int] = role.strip()
 
-            # Hapus member yang tidak ada dalam list baru
             ProjectMember.objects.filter(project=proyek).exclude(member_id__in=id_list).delete()
 
-            # Tambah atau update member baru
             for member_id in id_list:
                 role = role_map.get(member_id, "")
                 ProjectMember.objects.update_or_create(
@@ -206,12 +199,10 @@ def edit_proyek(request, pk):
                     member_id=member_id,
                     defaults={'role': role}
                 )
-
             return redirect('homepage')
     else:
         form = ProjectForm(instance=proyek)
 
-    # Ambil anggota proyek yang sudah terdaftar sebelumnya
     selected_members = ProjectMember.objects.filter(project=proyek).select_related("member")
     selected_member_dict = {
         str(pm.member.id): pm.role for pm in selected_members
@@ -221,18 +212,18 @@ def edit_proyek(request, pk):
         'form': form,
         'anggota_list': anggota_list,
         'selected_members': selected_member_dict,
-        'proyek': proyek   # digunakan untuk bedakan mode edit/tambah
+        'proyek': proyek
     })
 
 def hapus_proyek(request, pk):
     proyek = get_object_or_404(Project, pk=pk)
-    proyek.delete()   # Hapus proyek dari database
+    proyek.delete()
     return redirect('homepage')
 
 # ====== DAFTAR PEKERJAAN DALAM PROYEK TERTENTU ======
 def daftar_pekerjaan(request, proyek_id):
     proyek = get_object_or_404(Project, id=proyek_id)
-    daftar = proyek.pekerjaan.all()   # Ambil semua pekerjaan dari proyek tersebut
+    daftar = proyek.pekerjaan.all()
     return render(request, 'proyek/daftar_pekerjaan.html', {
         'proyek': proyek,
         'daftar_pekerjaan': daftar
@@ -241,9 +232,8 @@ def daftar_pekerjaan(request, proyek_id):
 # ====== TAMBAH PEKERJAAN ======
 def tambah_pekerjaan(request, proyek_id):
     proyek = get_object_or_404(Project, id=proyek_id)
-    anggota_list = TeamMember.objects.all()   # Daftar anggota untuk dipilih sebagai pelaksana
+    anggota_list = TeamMember.objects.all()
 
-    # Cek apakah proyek sudah ditutup
     if proyek.status == 'Selesai':
         messages.error(request, "Proyek sudah ditutup. Tidak bisa menambah pekerjaan.")
         return render(request, 'proyek/form_pekerjaan.html', {
@@ -256,9 +246,8 @@ def tambah_pekerjaan(request, proyek_id):
         form = PekerjaanForm(request.POST)
         if form.is_valid():
             pekerjaan = form.save(commit=False)
-            pekerjaan.project = proyek   # Tetapkan proyek
+            pekerjaan.project = proyek
 
-            # Ambil ID pelaksana (dalam bentuk string terpisah koma)
             pelaksana_ids = request.POST.get("pelaksana", "")
             if pelaksana_ids:
                 pelaksana_nama = [
@@ -284,7 +273,6 @@ def edit_pekerjaan(request, pk):
     proyek = pekerjaan.project
     anggota_list = TeamMember.objects.all()
 
-    # Cegah pengeditan jika proyek sudah ditutup
     if proyek.status == 'Selesai':
         messages.error(request, "Tidak bisa mengubah pekerjaan karena proyek sudah ditutup.")
         return redirect('daftar_pekerjaan', proyek_id=proyek.id)
@@ -300,7 +288,7 @@ def edit_pekerjaan(request, pk):
                     TeamMember.objects.get(id=int(pid)).name
                     for pid in pelaksana_ids.split(",") if pid.strip().isdigit()
                 ]
-                pekerjaan.pelaksana = ", ".join(pelaksana_nama)
+                pekerjaan.pelaksana = ", ".join(pelaksana_nama) # BUGFIX applied: pekerjaan.pelaksana
             else:
                 pekerjaan.pelaksana = ""
 
@@ -323,7 +311,6 @@ def hapus_pekerjaan(request, pk):
     pekerjaan = get_object_or_404(Pekerjaan, pk=pk)
     proyek = pekerjaan.project
 
-    # Tidak bisa hapus pekerjaan jika proyek sudah selesai
     if proyek.status == 'Selesai':
         messages.error(request, "Tidak bisa menghapus pekerjaan karena proyek sudah ditutup.")
         return redirect('daftar_pekerjaan', proyek_id=proyek.id)
@@ -334,7 +321,7 @@ def hapus_pekerjaan(request, pk):
 # ====== DETAIL PEKERJAAN (Termasuk Aktivitas) ======
 def detail_pekerjaan(request, pekerjaan_id):
     pekerjaan = get_object_or_404(Pekerjaan, id=pekerjaan_id)
-    aktivitas = pekerjaan.aktivitas.all()   # Ambil semua aktivitas di dalam pekerjaan
+    aktivitas = pekerjaan.aktivitas.all()
     return render(request, 'proyek/detail_pekerjaan.html', {
         'pekerjaan': pekerjaan,
         'aktivitas': aktivitas
@@ -345,7 +332,6 @@ def tambah_aktivitas(request, pekerjaan_id):
     pekerjaan = get_object_or_404(Pekerjaan, id=pekerjaan_id)
     anggota_list = TeamMember.objects.all()
 
-    # Cegah jika proyek sudah ditutup
     if pekerjaan.project.status == 'Selesai':
         messages.error(request, "Proyek sudah ditutup. Tidak bisa menambah aktivitas.")
         return render(request, 'proyek/form_aktivitas.html', {
@@ -387,7 +373,6 @@ def edit_aktivitas(request, aktivitas_id):
     pekerjaan = aktivitas.pekerjaan
     anggota_list = TeamMember.objects.all()
 
-    # Tidak bisa edit jika proyek sudah selesai
     if pekerjaan.project.status == 'Selesai':
         messages.error(request, "Tidak bisa mengubah aktivitas karena proyek sudah ditutup.")
         return redirect('detail_pekerjaan', pekerjaan_id=pekerjaan.id)
@@ -426,7 +411,6 @@ def hapus_aktivitas(request, aktivitas_id):
     proyek = aktivitas.pekerjaan.project
     pekerjaan_id = aktivitas.pekerjaan.id
 
-    # Cek status proyek
     if proyek.status == 'Selesai':
         messages.error(request, "Tidak bisa menghapus aktivitas karena proyek sudah ditutup.")
         return redirect('detail_pekerjaan', pekerjaan_id=pekerjaan_id)
@@ -442,7 +426,6 @@ def tambah_anggota(request):
 
         if form.is_valid():
             anggota = form.save(commit=False)
-            # Cek jika ada foto dalam bentuk base64
             if photo_data.startswith('data:image'):
                 format, imgstr = photo_data.split(';base64,')
                 ext = format.split('/')[-1]
@@ -455,7 +438,7 @@ def tambah_anggota(request):
 
 # ====== LIST SEMUA ANGGOTA ======
 def list_anggota(request):
-    query = request.GET.get('q')   # Jika user cari berdasarkan nama
+    query = request.GET.get('q')
     if query:
         anggota_list = TeamMember.objects.filter(name__icontains=query).order_by('name')
     else:
@@ -472,14 +455,10 @@ def edit_anggota(request, pk):
 
         if form.is_valid():
             anggota = form.save(commit=False)
-
-            # Hapus foto jika kosong
             if photo_data == "":
                 if anggota.photo:
                     anggota.photo.delete(save=False)
                 anggota.photo = None
-
-            # Atau simpan foto baru jika ada
             elif photo_data.startswith('data:image'):
                 format, imgstr = photo_data.split(';base64,')
                 ext = format.split('/')[-1]
@@ -512,10 +491,118 @@ def print_proyek(request, proyek_id):
     pelaksana = ProjectMember.objects.filter(project=proyek).select_related("member")
     pekerjaan_list = proyek.pekerjaan.all().prefetch_related("aktivitas")
 
+    # --- START NEW LOGIC FOR FETCHING EXTERNAL DATA ---
+    external_data = {
+        'ie': None,
+        'ic': None,
+        'imp_status': None,
+        'imp_detail': None,
+    }
+
+    # API Endpoints (copy from integrasi.html JS)
+    api_endpoints = {
+        'ie': {
+            'status': "https://fabyaanusakti.pythonanywhere.com/api/status-only/",
+            'detail': "https://fabyaanusakti.pythonanywhere.com/api/projek-data/"
+        },
+        'ic': {
+            'main': "https://arlellll.pythonanywhere.com/api-content/project-statuses/"
+        },
+        'imp': {
+            'status': "https://tasana.pythonanywhere.com/api/project-status/",
+            'detail': "https://tasana.pythonanywhere.com/api/projects-nested/"
+        }
+    }
+
+    # --- Utility functions for formatting (if needed for direct use in Python) ---
+    def format_iso_date_py(iso_string):
+        if not iso_string:
+            return 'N/A'
+        try:
+            from datetime import datetime
+            dt_obj = datetime.fromisoformat(iso_string.replace('Z', '+00:00')) # Handle 'Z' for UTC
+            return dt_obj.strftime('%d %B %Y') # e.g., 27 Juni 2025
+        except ValueError:
+            # Try YYYY-MM-DD format if ISO fails
+            if isinstance(iso_string, str) and iso_string.strip().count('-') == 2:
+                try:
+                    year, month, day = map(int, iso_string.split('-'))
+                    dt_obj = datetime(year, month, day)
+                    return dt_obj.strftime('%d %B %Y')
+                except ValueError:
+                    pass # Fall through to return original string
+            pass # Fall through to return original string
+        return iso_string # Return original string if parsing fails
+
+
+    try:
+        # Fetch data for IE module
+        ie_status_res = requests.get(api_endpoints['ie']['status'])
+        ie_status_res.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+        ie_detail_res = requests.get(api_endpoints['ie']['detail'])
+        ie_detail_res.raise_for_status()
+
+        ie_status_list = ie_status_res.json()
+        ie_projek_list = ie_detail_res.json()
+
+        # Mencari proyek berdasarkan ID aplikasi Anda (proyek.id)
+        external_data['ie'] = {
+            'status': next((p for p in ie_status_list if p.get('id') == proyek.id), None),
+            'detail': next((p for p in ie_projek_list if p.get('id_projek') == proyek.id), None),
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching IE data for printing: {e}")
+        messages.warning(request, f"Gagal mengambil data IE untuk cetak: {e}") # Opsional, jika ingin memberitahu user di browser
+    except json.JSONDecodeError as e:
+        print(f"Error decoding IE JSON for printing: {e}")
+        messages.warning(request, f"Gagal membaca format data IE untuk cetak: {e}")
+
+
+    try:
+        # Fetch data for IC module
+        ic_main_res = requests.get(api_endpoints['ic']['main'])
+        ic_main_res.raise_for_status()
+
+        ic_project_data_list = ic_main_res.json()
+        # Mencari proyek berdasarkan external_id (sesuai API IC)
+        external_data['ic'] = next((p for p in ic_project_data_list if str(p.get('external_id')) == str(proyek.id)), None)
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching IC data for printing: {e}")
+        messages.warning(request, f"Gagal mengambil data IC untuk cetak: {e}")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding IC JSON for printing: {e}")
+        messages.warning(request, f"Gagal membaca format data IC untuk cetak: {e}")
+
+
+    try:
+        # Fetch data for IMP module
+        imp_status_res = requests.get(api_endpoints['imp']['status'])
+        imp_status_res.raise_for_status()
+        imp_detail_res = requests.get(api_endpoints['imp']['detail'])
+        imp_detail_res.raise_for_status()
+
+        imp_statuses = imp_status_res.json()
+        imp_details = imp_detail_res.json()
+
+        # Mencari proyek berdasarkan external_id (sesuai API IMP)
+        external_data['imp_status'] = next((p for p in imp_statuses if str(p.get('external_id')) == str(proyek.id)), None)
+        external_data['imp_detail'] = next((p for p in imp_details if str(p.get('external_id')) == str(proyek.id)), None)
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching IMP data for printing: {e}")
+        messages.warning(request, f"Gagal mengambil data IMP untuk cetak: {e}")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding IMP JSON for printing: {e}")
+        messages.warning(request, f"Gagal membaca format data IMP untuk cetak: {e}")
+
+
+    # --- END NEW LOGIC FOR FETCHING EXTERNAL DATA ---
+
+    # Kirim semua data ke template print_proyek.html
     return render(request, 'proyek/print_proyek.html', {
-        'proyek': proyek,
-        'pelaksana': pelaksana,
-        'pekerjaan_list': pekerjaan_list
+        'proyek': proyek,           # Data proyek utama dari database Anda
+        'pelaksana': pelaksana,     # Anggota pelaksana proyek
+        'pekerjaan_list': pekerjaan_list, # Daftar pekerjaan dan aktivitas terkait
+        'external_data': external_data, # Data yang diambil dari API eksternal
     })
 
 # ====== TUTUP PROYEK ======
@@ -527,7 +614,7 @@ def tutup_proyek(request, proyek_id):
         form = TutupProyekForm(request.POST, request.FILES, instance=proyek)
         if form.is_valid():
             proyek = form.save(commit=False)
-            proyek.status = 'Selesai'   # Tandai proyek sudah ditutup
+            proyek.status = 'Selesai'
             proyek.save()
             messages.success(request, "Proyek berhasil ditutup.")
             return redirect('homepage')
@@ -544,7 +631,6 @@ def progres_proyek(request):
     start_of_year = date(selected_year, 1, 1)
     end_of_year = date(selected_year, 12, 31)
 
-    # Ambil proyek yang aktif (sebagian atau penuh) pada tahun tersebut
     semua_proyek = Project.objects.filter(
         start_date__lte=end_of_year,
         end_date__gte=start_of_year
@@ -559,7 +645,6 @@ def progres_proyek(request):
             "status": proyek.status
         })
 
-    # Ambil range tahun dari semua proyek
     all_years = Project.objects.aggregate(
         min_year=Min("start_date"),
         max_year=Max("end_date")
@@ -584,23 +669,14 @@ def integrasi_aplikasi(request):
     projects = Project.objects.all()
     return render(request, 'proyek/integrasi.html', {'projects': projects})
 
-# ====== API ENDPOINT UNTUK MELIHAT PROYEK (READONLY) ======
-class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
+# ====== API ENDPOINT UNTUK MANAJEMEN PROYEK (LENGKAP) ======
+class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    # Izinkan siapa saja untuk mengakses API ini (untuk pengembangan)
-    permission_classes = [permissions.AllowAny] # <--- TAMBAHAN: Untuk izin akses API
+    permission_classes = [permissions.AllowAny]
 
     @action(detail=False, methods=['get'], url_path='status-only')
     def status_only(self, request):
         projects = Project.objects.all()
         serializer = ProjectStatusOnlySerializer(projects, many=True)
         return Response(serializer.data)
-
-# ====== ALTERNATIF API BERDASARKAN APIView (non-ViewSet) ======
-# BARIS INI DIHAPUS UNTUK MENGHINDARI DUPLIKASI ENDPOINT STATUS-ONLY
-# class ProjectStatusOnlyAPIView(APIView):
-#    def get(self. request):
-#        projects = Project.objects.all()
-#        serializer = ProjectStatusOnlySerializer(projects, many=True)
-#        return Response(serializer.data)

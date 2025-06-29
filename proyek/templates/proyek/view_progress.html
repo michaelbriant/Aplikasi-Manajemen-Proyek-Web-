@@ -2,97 +2,176 @@
 {% block title %}Progres Proyek{% endblock %}
 {% block content %}
 
-<h2 style="text-align:center; color: #1a2b44; font-weight: bold; margin-top: 20px;">
-    Rentang Waktu dan Status Proyek Tahun {{ selected_year }}
-</h2>
+<style>
+    /* Global Container Styling (consistent with other pages) */
+    .progress-container-wrapper {
+        max-width: 1000px; /* Slightly wider for chart */
+        margin: 40px auto;
+        padding: 30px;
+        background: linear-gradient(135deg, #f5faff 0%, #e0ecf7 100%); /* Soft light blue gradient */
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        color: #333;
+        border: 1px solid #cce0f0;
+    }
 
-<form method="get" style="text-align: center; margin: 20px 0;">
-    <select name="year" onchange="this.form.submit()" class="year-select">
-        {% for year in years %}
-            <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-        {% endfor %}
-    </select>
-</form>
+    h2 {
+        text-align: center;
+        color: #1a2b44;
+        font-weight: 700; /* Bolder */
+        font-size: 28px; /* Larger */
+        margin-top: 0; /* Adjust margin-top to fit container */
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e0eaf1;
+    }
 
-<div class="chart-container">
-    <canvas id="grafikProyek"></canvas>
-</div>
+    /* Year Select Form */
+    .year-select-form {
+        text-align: center;
+        margin-bottom: 30px; /* More space below select */
+    }
 
-<div style="display: flex; justify-content: center; margin-top: 20px;">
-    <div class="legend-box">
-        <span style="color: green;">Selesai</span>
-        <span style="color: yellow;">Berlangsung</span>
-        <span style="color: orange;">Tertunda</span>
-        <span style="color: red;">Berhenti</span>
-        <span style="color: gray;">Perencanaan</span>
-        <span style="color: dodgerblue;">Siap untuk Dideploy</span>
+    .year-select {
+        padding: 10px 18px; /* More padding */
+        font-size: 16px;
+        border-radius: 8px; /* More rounded */
+        border: 1px solid #a3c1da; /* Softer border */
+        background-color: #ffffff; /* White background */
+        color: #333; /* Dark text */
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); /* Inner shadow */
+        -webkit-appearance: none; /* Remove default select arrow */
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231a2b44'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); /* Custom arrow */
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        background-size: 18px;
+        cursor: pointer;
+    }
+
+    /* Chart Container Styling */
+    .chart-container {
+        display: flex;
+        justify-content: center;
+        padding: 0; /* Remove padding here, handled by wrapper */
+        margin-bottom: 30px; /* Space below chart */
+    }
+
+    #grafikProyek {
+        background-color: #334e6e; /* Slightly lighter dark blue for chart background */
+        border-radius: 12px;
+        height: 400px; /* Make chart a bit taller */
+        width: 100%;
+        max-width: 900px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Add shadow to chart */
+        padding: 20px; /* Add padding inside chart canvas if needed for labels */
+        box-sizing: border-box;
+    }
+
+    /* Legend Styling */
+    .legend-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .legend-box {
+        background-color: #334e6e; /* Consistent with chart background */
+        padding: 15px 25px; /* More padding */
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px; /* More space between items */
+        border-radius: 30px; /* More rounded pill-like shape */
+        width: fit-content;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Shadow for legend */
+    }
+
+    .legend-box span {
+        color: white;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        font-weight: 500; /* Slightly bolder text */
+    }
+
+    .legend-box span::before {
+        content: '';
+        display: inline-block;
+        width: 16px; /* Larger color dot */
+        height: 16px; /* Larger color dot */
+        border-radius: 50%;
+        margin-right: 8px; /* More space */
+        background-color: currentColor;
+        box-shadow: 0 0 5px rgba(255,255,255,0.3); /* Slight glow effect */
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .progress-container-wrapper {
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+        .year-select {
+            width: 80%; /* Wider in mobile */
+            max-width: 240px;
+        }
+        #grafikProyek {
+            height: 350px; /* Adjust height for smaller screens */
+            padding: 10px;
+        }
+        .legend-box {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 15px;
+            width: 90%; /* Wider legend box in mobile */
+        }
+    }
+    @media (max-width: 480px) {
+        .legend-box span {
+            font-size: 13px;
+        }
+        .legend-box span::before {
+            width: 12px;
+            height: 12px;
+        }
+    }
+</style>
+
+<div class="progress-container-wrapper">
+    <h2>Rentang Waktu dan Status Proyek Tahun {{ selected_year }}</h2>
+
+    <form method="get" class="year-select-form">
+        <select name="year" onchange="this.form.submit()" class="year-select">
+            {% for year in years %}
+                <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <div class="chart-container">
+        <canvas id="grafikProyek"></canvas>
+    </div>
+
+    <div class="legend-wrapper">
+        <div class="legend-box">
+            <span style="color: #4CAF50;">Selesai</span> {# Brighter Green #}
+            <span style="color: #FFC107;">Berlangsung</span> {# Brighter Amber #}
+            <span style="color: #FF9800;">Tertunda</span> {# Brighter Orange #}
+            <span style="color: #F44336;">Berhenti</span> {# Brighter Red #}
+            <span style="color: #9E9E9E;">Perencanaan</span> {# Neutral Gray #}
+            <span style="color: #2196F3;">Siap untuk Dideploy</span> {# Brighter Blue #}
+        </div>
     </div>
 </div>
-
-<style>
-.chart-container {
-    display: flex;
-    justify-content: center;
-    padding: 0 20px;
-}
-#grafikProyek {
-    background-color: #1a2b44;
-    border-radius: 12px;
-    height: 300px;
-    width: 100%;
-    max-width: 900px;
-}
-
-.year-select {
-    padding: 8px 14px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    width: 160px;
-}
-
-.legend-box {
-    background-color: #1a2b44;
-    padding: 10px 20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 14px;
-    border-radius: 24px;
-    width: fit-content;
-}
-
-.legend-box span {
-    color: white;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-}
-
-.legend-box span::before {
-    content: '';
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    margin-right: 6px;
-    background-color: currentColor;
-}
-
-@media (max-width: 768px) {
-    .year-select {
-        width: 100%;
-        max-width: 240px;
-    }
-}
-@media (max-width: 480px) {
-    .legend-box {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
-</style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
@@ -105,35 +184,38 @@
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: proyekData.map(p => p.nama),
+            labels: proyekData.map(p => p.nama), // Y-axis labels (project names)
             datasets: proyekData.map(p => ({
-                label: p.nama,
+                label: p.nama, // Label for tooltip
                 data: [{
-                    x: [p.mulai, p.selesai],
-                    y: p.nama
+                    x: [p.mulai, p.selesai], // X-axis range (start-end dates)
+                    y: p.nama // Y-axis value (project name)
                 }],
                 backgroundColor:
-                    p.status === 'Selesai'     ? 'rgba(0, 128, 0, 0.8)' :
-                    p.status === 'Berlangsung' ? 'rgba(255, 215, 0, 0.8)' :
-                    p.status === 'Tertunda'    ? 'rgba(255, 165, 0, 0.8)' :
-                    p.status === 'Berhenti'    ? 'rgba(255, 0, 0, 0.8)' :
-                    p.status === 'Perencanaan' ? 'rgba(160, 160, 160, 0.8)' :
-                    p.status === 'Siap untuk Dideploy' ? 'rgba(30, 144, 255, 0.8)' :
-                    'rgba(180, 180, 180, 0.6)',
-                borderRadius: 4,
-                barThickness: 24
+                    p.status === 'Selesai'         ? '#4CAF50' : /* Green */
+                    p.status === 'Berlangsung'     ? '#FFC107' : /* Amber */
+                    p.status === 'Tertunda'        ? '#FF9800' : /* Orange */
+                    p.status === 'Berhenti'        ? '#F44336' : /* Red */
+                    p.status === 'Perencanaan'     ? '#9E9E9E' : /* Grey */
+                    p.status === 'siap_dideploy'   ? '#2196F3' : /* Blue */
+                    '#BDBDBD', /* Default grey if status unknown */
+                borderColor: 'rgba(255, 255, 255, 0.4)', /* Lighter border for bars */
+                borderWidth: 1,
+                borderRadius: 6, /* Slightly more rounded bars */
+                barThickness: 28, /* Slightly thicker bars */
+                minBarLength: 5 /* Ensure small bars are visible */
             }))
         },
         options: {
-            indexAxis: 'y',
+            indexAxis: 'y', // Horizontal bars
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: false, // Allow custom height
             layout: {
                 padding: {
                     top: 10,
-                    right: 24,  
+                    right: 30,
                     bottom: 10,
-                    left: 10
+                    left: 20 /* More padding on left for long names */
                 }
             },
             scales: {
@@ -141,42 +223,77 @@
                     type: 'time',
                     time: {
                         unit: 'month',
-                        tooltipFormat: 'MMMM yyyy',
+                        tooltipFormat: 'MMMM d, yyyy', /* More detailed tooltip date */
                         displayFormats: {
                             month: 'MMM'
                         }
                     },
-                    min: '{{ selected_year }}-01-01',
-                    max: '{{ selected_year }}-12-31',
-                    grid: { color: 'white' },
+                    min: `{{ selected_year }}-01-01`,
+                    max: `{{ selected_year }}-12-31`,
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.2)', /* Lighter grid lines */
+                        drawBorder: false /* Remove border line around grid */
+                    },
                     title: {
                         display: true,
                         text: 'Bulan',
-                        color: 'white'
+                        color: 'white',
+                        font: { size: 16, weight: 'bold' } /* Bolder title */
                     },
-                    ticks: { color: 'white' }
+                    ticks: { 
+                        color: 'white',
+                        font: { size: 14 } /* Readable tick labels */
+                    },
+                    border: {
+                        display: false /* Remove x-axis border */
+                    }
                 },
                 y: {
-                    grid: { color: 'white' },
-                    ticks: { color: 'white' },
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.2)', /* Lighter grid lines */
+                        drawBorder: false /* Remove border line around grid */
+                    },
+                    ticks: { 
+                        color: 'white',
+                        font: { size: 14 } /* Readable tick labels */
+                    },
                     title: {
                         display: true,
                         text: 'Nama Proyek',
-                        color: 'white'
+                        color: 'white',
+                        font: { size: 16, weight: 'bold' } /* Bolder title */
+                    },
+                    border: {
+                        display: false /* Remove y-axis border */
                     }
                 }
             },
             plugins: {
-                legend: { display: false },
+                legend: { display: false }, // Legend is handled by custom HTML
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)', /* Darker tooltip background */
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                    borderWidth: 1,
+                    cornerRadius: 6,
+                    displayColors: false, /* Hide color box in tooltip */
                     callbacks: {
                         label: function(context) {
+                            const projectName = context.dataset.label;
                             const [start, end] = context.raw.x;
                             const startDate = new Date(start);
                             const endDate = new Date(end);
-                            const formattedStart = startDate.toLocaleDateString('id-ID');
-                            const formattedEnd = endDate.toLocaleDateString('id-ID');
-                            return `${context.dataset.label}: ${formattedStart} - ${formattedEnd}`;
+                            const formattedStart = startDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                            const formattedEnd = endDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                            
+                            const status = proyekData.find(p => p.nama === projectName)?.status;
+                            return [
+                                `Proyek: ${projectName}`,
+                                `Status: ${status ? status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Tidak Diketahui'}`,
+                                `Mulai: ${formattedStart}`,
+                                `Selesai: ${formattedEnd}`
+                            ];
                         }
                     }
                 }
