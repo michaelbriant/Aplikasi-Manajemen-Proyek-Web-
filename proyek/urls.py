@@ -7,7 +7,7 @@ from django.urls import path, include
 urlpatterns = [
     # ===== Beranda utama aplikasi =====
     path('', views.homepage, name='homepage'),
-
+ 
     # ===== Autentikasi Pengguna =====
     path('login/', views.login_view, name='login'),          # Form login
     path('logout/', views.custom_logout, name='logout'),      # Logout custom
